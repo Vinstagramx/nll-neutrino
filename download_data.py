@@ -1,6 +1,7 @@
 # Importing relevant packages
 import numpy as np
 import re
+import pandas as pd
 
 class ShortcodeError(Exception):
     """Exception raised when the entered shortcode is not of the correct format.
@@ -36,5 +37,5 @@ def data_to_csv(shortcode):
     unosc_flux = np.loadtxt(data_url, skiprows = 205)  # Reads the second half of the generated data (simulated event number prediction)
 
     # Saving data as .csv file - note that np.c_ saves the data in column format.
-    np.savetxt(f"{shortcode}_data.csv", np.c_[fit_data, unosc_flux], delimiter=',', header = 'Data, Event Number')
+    np.savetxt(f"{shortcode}_data.csv", np.c_[fit_data, unosc_flux], delimiter=',', header = 'Data, Event Number', comments = '')
 
