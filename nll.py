@@ -1,7 +1,7 @@
 import numpy as np
 
-class EventRate():
-    """Class which varies the oscillation parameters to produce the oscillated event rate prediction
+class NLL():
+    """Class which calculates the Negative Log Likelihood. Also uses the oscillation parameters to produce the oscillated event rate prediction
     (Used in sections 3.1, and 5 - cross-section)
     """
 
@@ -19,7 +19,7 @@ class EventRate():
         # Checking for errors
         if len(energies) != len(event_rates):
             raise AttributeError("Energy and simulated event rate arrays must be of equal length!")
-        if not isinstance(energies, np.array) and isinstance(event_rates, np.array):
+        if not isinstance(energies, np.ndarray) and isinstance(event_rates, np.ndarray):
             raise TypeError("Please ensure that energies and event rates are in the form of NumPy arrays!")
 
         self._energies = energies
@@ -37,8 +37,8 @@ class EventRate():
             prob_arr: Array of survival (non-oscillation) probabilities.
         """
         prob_list = np.zeros(len(self._energies))
-        for i in self._energies:
-            osc_prob = np.sin(np.sin(2 * self._mix_ang)) * np.sin(np.sin((1.267 * self._sq_mass_diff * self._dist)/ i))
+        for i, val in enumerate(self._energies):
+            osc_prob = (np.sin(2 * self._mix_ang) ** 2) * (np.sin((1.267 * self._sq_mass_diff * self._dist)/ val) ** 2)
             surv_prob = 1 - osc_prob 
             prob_list[i] = surv_prob
         
@@ -54,5 +54,29 @@ class EventRate():
         
         return self._lambdas
 
-    
+    def nll(self, stirling = True):
+        """Calculates the Negative Log Likelihood (NLL) of the given parameters
+
+        Args:
+            stirling: Use Stirling's approximation to calculate the NLL (default = True).
+        """
+        if stirling:
+            sum = 0
+            # explain enumerate, val = lambda_i
+            for i, val in enumerate(self._lambdas):
+                sum_term = val - self._event_rates[i] + (self._event_rates[i] * np.log(self._event_rates[i]/val))
+                sum += sum_term
+            NLL = sum
+        elif not stirling:  # More accurate method of finding NLL
+            product = 1
+            for i, val in enumerate(self._lambdas):
+                prod_term = (val ** self._event_rates[i]) * np.exp(-1 * val) / np.math.factorial(self._event_rates[i])
+                product *= prod_term
+            NLL = product
+        else:
+            raise AttributeError("'stirling' argument must be specified as either 'True' or 'False'!")
+
+        return NLL
+
+
 
