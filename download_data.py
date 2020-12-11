@@ -12,6 +12,7 @@ class ShortcodeError(Exception):
     def __init__(self, message = "Shortcode is invalid. Please enter a valid Imperial shortcode."):
         self.message = message
         print(self.message)  # Prints error message in console.
+        
 
 def data_to_csv(shortcode):
     """Function which saves the experimental data from the High Energy Physics Group website as a .csv file.

@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os  # os is used in order to ensure that the correct file paths are accessed regardless of platform used
-from numba import jit, njit  # Python compiler to speed up iteration of NumPy arrays
 
 # Ensures that current working directory is the directory that contains the current module
 os.chdir(os.path.dirname(os.path.abspath(__file__))) 
@@ -57,7 +56,7 @@ def hist_downsample(input, factor):
     return np.array(downsampled)  # Returns the downsampled list as a NumPy array
 
 
-def histogram(input, num_bins, filename, title = None, colour = 'b'):
+def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = None, **bar_kwargs):
     """Creates and saves a histogram plot of the input (in this case our experimental data).
 
     Ensures that the number of bins inputted is an integer number.
@@ -67,6 +66,13 @@ def histogram(input, num_bins, filename, title = None, colour = 'b'):
 
     Args:
         input: Input array of bin frequencies.
+        num_bins: Number of input bins (must be a factor of the input length).
+        filename: Filename of output plot (to be saved within the 'plots' folder).
+        title: Title of plot.
+        xlabel = X-axis label.
+        ylabel = Y-axis label.
+        bar_kwargs: Optional input arguments for the bar plot. If any of these are invalid, then an exception is raised within
+                    the Matplotlib package.
 
     Raises:
         TypeError: If a non-integer number of bins is entered.
@@ -91,9 +97,26 @@ def histogram(input, num_bins, filename, title = None, colour = 'b'):
         down_arr = input
 
     plot_settings(grid = True)
-    plt.bar(midpoints, height = down_arr, width = bin_size, color = colour)  # Width of bar is set to the size of the histogram bin
+    plt.bar(midpoints, height = down_arr, width = bin_size, **bar_kwargs)  # Width of bar is set to the size of the histogram bin
+
+    # If user specifies axis labels
     if title != None:
         plt.title(title)
+    if xlabel != None:
+        plt.xlabel(xlabel)
+    if ylabel != None:
+        plt,ylabel(ylabel)
     
     # f-string allows save filepath to be set inside the plt.savefig() function
-    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot
+    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
+
+def plot(x_input, y_input, filename, title = None, **plot_kwargs):
+    """check x and y same langth
+    """
+    plot_settings(grid = True)
+    plt.plot(x_input, y_input, **plot_kwargs)
+    if title != None:
+        plt.title(title)
+        
+    # f-string allows save filepath to be set inside the plt.savefig() function
+    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder

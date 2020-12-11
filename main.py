@@ -23,7 +23,11 @@ event_no = data[1]
 # Plotting histograms of the data over the range 0-10 GHz, with varying numbers of bins (and thus varying intervals)
 bins_list = [200, 100, 50, 25]
 for i, val in enumerate(bins_list):
-    plots.histogram(exp_data, val, f"hist_{val}", f"Plot of Experimental Data ({val} bins)", colour = colour_list[i])
+    plots.histogram(exp_data, val, f"hist_{val}", f"Plot of Experimental Data ({val} bins)", xlabel = 'Energy (GeV)', ylabel = 'Frequency' color = colour_list[i])
+
+"""
+Section 3.2 - Calculating Oscillation Probability and Investigating Oscillation Parameters
+"""
 
 
 
