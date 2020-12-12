@@ -10,22 +10,39 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 cwd = os.getcwd()
 plot_path = os.path.join(cwd, 'plots')  # Setting the path of the plots folder, that plots are to be saved to
 
+class LengthError(Exception):
+    """Exception raised when input arrays to the plotting function have unequal lengths.
+
+    Attributes:
+        message: Explanation of the error.
+    """
+    def __init__(self, message = "Input arrays must be equal in length!"):
+        self.message = message
+
 def plot_settings(clear = True, grid = True):
     """Defines the settings of the Matplotlib plot.
 
-    Clears the previous figure, and sets the size of the plot, and the fontsize of its elements.
+    Sets the size of the figure, and the fontsize of its elements. Options to clear the previous figure and to add a grid are available.
+
+    Args:
+        clear: Boolean argument to clear the previous figure (default set to True).
+        grid: Boolean argument to include a grid in the figure (default set to True).
     """
     if clear:
         plt.clf()  # Clears any previous figures
-    figure = plt.gcf()  # Sets figure size
+
+    # Setting figure size
+    figure = plt.gcf()
     figure.set_size_inches(18, 10)
+
+    # Setting size of plot elements
     plt.rc('axes', labelsize = 22, titlesize = 24) 
     plt.rc('xtick', labelsize = 18)   
     plt.rc('ytick', labelsize = 18)    
     plt.rc('legend', fontsize = 20)
     plt.rc('axes', axisbelow = True) # Ensures that the grid is behind any graph elements
     if grid:
-        plt.grid()
+        plt.grid()  # Adds a grid to the plot
 
 def hist_downsample(input, factor):
     """Downsamples the input bin frequency data, assuming equally spaced intervals.
@@ -69,11 +86,11 @@ def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = N
         input: Input array of bin frequencies.
         num_bins: Number of input bins (must be a factor of the input length).
         filename: Filename of output plot (to be saved within the 'plots' folder).
-        title: Title of plot.
-        xlabel = X-axis label.
-        ylabel = Y-axis label.
-        bar_kwargs: Optional input arguments for the bar plot. If any of these are invalid, then an exception is raised within
-                    the Matplotlib package.
+        title: Title of plot (default set to None).
+        xlabel: x-axis label (default set to None).
+        ylabel: y-axis label (default set to None).
+        **bar_kwargs: Optional input arguments for the bar plot. If any of these are invalid, then an exception is raised within
+                      the Matplotlib package.
 
     Raises:
         TypeError: If a non-integer number of bins is entered.
@@ -86,20 +103,20 @@ def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = N
     if 200 % num_bins != 0:
         raise ValueError('The original number of intervals must be divisible by the number of bins inputted.')
     
-    x_bins = np.linspace(0, 10, num = num_bins, endpoint = False)
-    bin_size = x_bins[1] - x_bins[0]
+    x_bins = np.linspace(0, 10, num = num_bins, endpoint = False)  # Generates list of x-values (in this case energies) at the start of each bin interval
+    bin_size = x_bins[1] - x_bins[0]  # Calculating size of bins
     midpoints = [i + (bin_size/2) for i in x_bins]  # List of midpoints generated for the centre of each bar
 
     down_fact = len(input) / num_bins  # Calculating the downsampling factor
-    if down_fact != 1:  # If the number of bins needed is equal to the length of the input data, no need to downsample
+    if down_fact != 1:  
         down_arr = hist_downsample(input, down_fact)  # Downsampling the input data
     else:
-        down_arr = input
+        down_arr = input  # If the number of bins needed is equal to the length of the input data, no need to downsample
 
-    plot_settings(grid = True)
+    plot_settings(grid = True)  # Defining plot settings
     plt.bar(midpoints, height = down_arr, width = bin_size, **bar_kwargs)  # Width of bar is set to the size of the histogram bin
 
-    # If user specifies axis labels
+    # Adds a title or axis labels if specified by the user
     if title != None:
         plt.title(title)
     if xlabel != None:
@@ -108,15 +125,36 @@ def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = N
         plt,ylabel(ylabel)
     
     # f-string allows save filepath to be set inside the plt.savefig() function
-    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
+    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)
 
-def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None, **plot_kwargs):
-    """check x and y same langth
+def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None, clear = True, **plot_kwargs):
+    """Creates and saves a plot of data from two 1-D arrays input by the user.
+
+    Ensures that there are the same number of x-values as there are y-values before plotting data.
+    Options to set the axes labels, as well as the title are available. Optional plot arguments are also supported.
+
+    Args:
+        x_input: Input list or NumPy array of x-coordinates.
+        y_input: Input list or NumPy array of y-coordinates.
+        filename: Filename of output plot (to be saved within the 'plots' folder).
+        title: Title of plot (default set to None).
+        xlabel: x-axis label (default set to None).
+        ylabel: y-axis label (default set to None).
+        clear: Clear previous figure(s) (default set to True).
+        **plot_kwargs: Optional input arguments for the plot. If any of these are invalid, then an exception is raised within
+                      the Matplotlib package.
+
+    Raises:
+        LengthError: If the lengths of x_input and y_input are not equal.
     """
-    plot_settings(grid = True)
-    plt.plot(x_input, y_input, **plot_kwargs)
+    # Checking that the x- and y- inputs are equal in length
+    if len(x_input) != len(y_input):
+        raise LengthError()
 
-    # If user specifies axis labels
+    plot_settings(clear = clear, grid = True)  # Defining plot settings
+    plt.plot(x_input, y_input, **plot_kwargs)  # Plotting input values, with optional arguments
+
+    # Adds a title or axis labels if specified by the user
     if title != None:
         plt.title(title)
     if xlabel != None:
@@ -125,20 +163,42 @@ def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None,
         plt.ylabel(ylabel)
         
     # f-string allows save filepath to be set inside the plt.savefig() function
-    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
+    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)
 
-def surf_plot(x, y, z, filename, title = None, xlabel = None, ylabel = None, zlabel = None, elev = 0, azim = 0, **plot_kwargs):
-    """Creates a surface plot based on three input arrays (x,y,z)
-    check x y z same length
-    z set to 0-1 bc probability
+def surf_plot(x, y, z, filename, title = None, xlabel = None, ylabel = None, zlabel = None, elev = 0, azim = 0, **surf_kwargs):
+    """Creates a surface plot based on three input arrays (x,y,z).
+
+    Checks that the input arrays in all 3 cardinal directions are of the same length before plotting.
+    Options to set the axes labels, as well as the title are available. Optional plot arguments are also supported.
+    The 'camera angle' of the 3-dimensional surface plot can also be specified for the figure before saving.
+
+    Args:
+        x: Input list or NumPy array of x-coordinates.
+        y: Input list or NumPy array of y-coordinates.
+        z: Input list or NumPy array of z-coordinates.
+        filename: Filename of output plot (to be saved within the 'plots' folder).
+        title: Title of plot (default set to None).
+        xlabel: x-axis label (default set to None).
+        ylabel: y-axis label (default set to None). 
+        zlabel: z-axis label (default set to None).
+        elev: Elevation viewing angle (one of the 'camera angles') of the 3-D surface plot.
+        azim: Azimuthal viewing angle (the other 'camera angle') of the 3-D surface plot.
+        **surf_kwargs: Optional input arguments for the surface plot. If any of these are invalid, then an exception is raised within
+                       the Matplotlib package.
+    
+    Raises:
+        LengthError: If the lengths of the inputs (x, y and z) are not equal.
     """
+    # Checking that the x- and y- and z- inputs are equal in length   
+    if len(x) != len(y) != len(z):
+        raise LengthError()
 
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    fig = plt.figure()  # Creates blank figure
+    ax = fig.gca(projection='3d')  # Creating 3-dimensional axes
     fig.set_size_inches(18, 10)  # Sets figure size
-    # x, y = np.meshgrid(x, y)
+
     # Plotting the surface - specifying the colormap, and setting the surface to opaque (with antialiased = False)
-    ax.plot_trisurf(x, y, z, cmap = cm.coolwarm, linewidth=0, antialiased=False) 
+    ax.plot_trisurf(x, y, z, cmap = cm.coolwarm, linewidth=0, antialiased=False, **surf_kwargs) 
 
     # Setting plot parameters
     ax.set_title(title, fontsize = 24, pad = 15)
@@ -146,7 +206,7 @@ def surf_plot(x, y, z, filename, title = None, xlabel = None, ylabel = None, zla
     ax.set_ylabel(ylabel, fontsize=18, labelpad = 15)
     ax.set_zlabel(zlabel, fontsize=18, labelpad = 15)
     ax.tick_params(axis='both', which='major', pad=10)
-    ax.set_zlim(0, 1.0)  # z-axis limits set to [0,1] as the z-axis refers to probability.
+    ax.set_zlim(0, 1.0)  # z-axis limits set to [0,1] as the z-axis refers to probability in our case.
 
     ax.view_init(elev=elev, azim=azim)  # Sets 'camera angle' of surface plot, for saving
     # f-string allows save filepath to be set inside the plt.savefig() function
