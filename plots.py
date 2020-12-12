@@ -122,7 +122,7 @@ def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = N
     if xlabel != None:
         plt.xlabel(xlabel)
     if ylabel != None:
-        plt,ylabel(ylabel)
+        plt.ylabel(ylabel)
     
     # f-string allows save filepath to be set inside the plt.savefig() function
     plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)

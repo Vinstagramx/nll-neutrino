@@ -40,9 +40,9 @@ class NLL():
         self._dist = distance
         self._sq_mass_diff = sq_mass_diff
 
-        # Initialising empty member variables for later checks (to see if methods have been carried out)
-        self._probs = None
-        self._lambdas = None
+        # Initialising flags for later checks (to see if methods have been carried out)
+        self._probs_found = False
+        self._lambdas_found = False
 
     def surv_prob(self):
         """Calculates the survival probabilities (P(ν_µ --> ν_µ)) of the muon neutrino.
@@ -62,6 +62,7 @@ class NLL():
             prob_list[i] = surv_prob  # Assigns the calculated probability value with the corresponding index
         
         self._probs = np.array(prob_list)  # Saving the probabilities within the class for later use
+        self._probs_found = True 
         return self._probs  # Returns the survival probabilities (in the form of a NumPy array)
     
     def calc_lambda(self):
@@ -75,13 +76,15 @@ class NLL():
             self._lambdas: Array of oscillated event rates.
         
         Raises:
-            AttributeError: If self._probs is empty - i.e. the survival probabilities have not yet been calculated.
+            AttributeError: If the survival probabilities have not yet been calculated.
         """
-        if self._probs = None:
+        # Checking that the survival probabilities have been found
+        if not self._probs_found:
             raise AttributeError('Please calculate survival probabilities using surv_prob() before finding oscillated event rates.')
         lambda_u = self._probs * self._energies  # Multiplication to find list of λ
+
         self._lambdas = lambda_u  # Saving the array of λs within the class for later use
-        
+        self._lambdas_found = True 
         return self._lambdas  # Returns the oscillated event rates (in the form of a NumPy array)
 
     def find_nll(self):
@@ -94,9 +97,10 @@ class NLL():
         Returns:
             self._NLL: Value of negative log likelihood.
         Raises:
-
+            AttributeError: If oscillated event rates have not yet been calculated.
         """
-        if self._lambdas = None:
+        # Checking that oscillated event rates have been found
+        if not self._lambdas_found:
             raise AttributeError('Please calculate oscillated event rates using calc_lambda() before finding the NLL.')
         sum = 0  # Initial value of sum
         # Adding on the sum terms calculated for each energy 'bin'
