@@ -168,6 +168,49 @@ class Minimise1D():
             else:
                 self._y[ind] = self._func(val)
     
+    def std_theta(self, return_all = False):
+        """Calculates the standard deviation of the minimising parameter (in this case the mixing angle).
+        
+        The parameter (in this case the mixing angle) is shifted incrementally in both directions, until the NLL has increased by an absolute value of 0.5.
+        At this point, a shift of one standard deviation has occurred. To calculate the standard deviation, the shifts in both directions are averaged.
+        There is also an option to measurements other than the standard deviation (namely θ+ and θ-, and their corresponding NLL values).
+
+        Args:
+            return_all: Returns all stats (standard deviation, θ+ and θ-, and their corresponding NLL values) in a list.
+        
+        Returns:
+            self._std_stats: Calculated standard deviation and related stats are returned in a list if return_all is set to True.
+                             Only the standard deviation is returned if return_all is set to False.
+        """
+        # Setting a limit for the NLL iterations - i.e. value of minimum NLL + 0.5 
+        nll_lim = self._min_func + 0.5
+
+        self._theta_plus = self._min  # θ+ initially set to minimising mixing angle value
+        self._plus_found = False  # Boolean flag for θ+ being found
+        while not self._plus_found:
+            temp_nll_p = self.calc_nll(self._theta_plus)  # Temporary calculated NLL value (in +θ direction)
+            if temp_nll_p >= nll_lim:
+                self._plus_found = True  # If calculated NLL value is above the limit, triggers the flag
+            else:
+                self._theta_plus += 1e-5  # Increments theta_plus if NLL limit is not reached
+
+        self._theta_minus = self._min  # θ- initially set to minimising mixing angle value
+        self._minus_found = False  # Boolean flag for θ- being found
+        while not self._minus_found:
+            temp_nll_m = self.calc_nll(self._theta_minus)  # Temporary calculated NLL value (in -θ direction)
+            if temp_nll_m >= nll_lim:
+                self._minus_found = True  # If calculated NLL value is above the limit, triggers the flag
+            else:
+                self._theta_minus -= 1e-5  # Decrements theta_minus if NLL limit is not reached
+        
+        # Finding the standard deviation by averaging the differences of θ+ and θ- from the minimum
+        std = ((self._theta_plus - self._min) + (self._min - self._theta_minus)) / 2  
+        if return_all:
+            self._std_stats = [std, self._theta_plus, self._theta_minus, temp_nll_p, temp_nll_m]  # Variable contains stats in list form
+        else:
+            self._std_stats = std  # Variable consists of standard deviation only
+
+        return self._std_stats  # Returns variable
 
     """
     Getters to access the private member variables outside the class.
