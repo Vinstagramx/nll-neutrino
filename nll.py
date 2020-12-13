@@ -25,12 +25,12 @@ class NLL():
             sq_mass_diff: Difference between the squared masses of the two neutrinos, in eV^2.
 
         Raises:
-            AttributeError: If the NumPy arrays 'energies' and 'event_rates' are not of the same length.
+            AttributeError: If the NumPy arrays 'energies', 'event_rates' and 'obs_events' are not of the same length.
             TypeError: If the energy midpoints and the simulated event rates are not inputted in the form of NumPy arrays.
         """
         # Checking for input errors
-        if len(energies) != len(event_rates):
-            raise AttributeError("Energy and simulated event rate arrays must be of equal length!")
+        if len(energies) != len(event_rates) != len(obs_events):
+            raise AttributeError("Input arrays must be of equal length!")
         if not isinstance(energies, np.ndarray) and isinstance(event_rates, np.ndarray):
             raise TypeError("Please ensure that energies and event rates are in the form of NumPy arrays!")
 
@@ -55,7 +55,7 @@ class NLL():
         Returns:
             self._probs: Array of survival (non-oscillation) probabilities.
         """
-        prob_list = np.zeros(len(self._energies))  # Initialising an empty (placeholder) NumPy array for probability values
+        prob_list = np.empty(len(self._energies))  # Initialising an empty (placeholder) NumPy array for probability values
 
         # Calculating the survival probability for each energy 'bin'
         for i, val in enumerate(self._energies):

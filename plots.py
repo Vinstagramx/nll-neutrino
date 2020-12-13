@@ -18,6 +18,7 @@ class LengthError(Exception):
     """
     def __init__(self, message = "Input arrays must be equal in length!"):
         self.message = message
+        print(self.message)  # Prints error message in console.
 
 def plot_settings(clear = True, grid = True):
     """Defines the settings of the Matplotlib plot.
