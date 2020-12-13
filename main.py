@@ -167,6 +167,25 @@ print(f"Mixing Angle which minimises NLL: {min_theta2}")
 print(f"NLL value: {min_obj2.min_func}")
 print(f"Iterations: {min_obj2.iterations}")
 
+# What if range includes both local minima?
+min_obj3 = Minimise1D(init_range = [0.2, 1.2], nll = True, nll_param = 'theta', nll_data = data)  # The second range of [0.795,1.02] was chosen by inspection of the previous plot
+min_theta3 = min_obj3.para_min()
+print("--- Minimising over both local minima ---")
+print(f"Mixing Angle which minimises NLL: {min_theta3}")
+print(f"NLL value: {min_obj3.min_func}")
+print(f"Iterations: {min_obj3.iterations}")
+
+# Testing the minimisation on an arbitrary function
+def parabola(x):
+  return x ** 2 - 2 * x + 1  # Parabola with minimum at (1,0)
+
+min_obj4 = Minimise1D(init_range = [-5, 5], nll = False, nll_param = None, nll_data = None, func = parabola)
+min_x = min_obj4.para_min()
+print("--- Parabola Function: y = x^2 - 2x + 1 ---")
+print(f"x-value which minimises f(x): {min_x}")
+print(f"y-value: {min_obj4.min_func}")
+print(f"Iterations: {min_obj4.iterations}")
+
 """
 Section 3.5 - Accuracy of Parabolic Fit
 """
