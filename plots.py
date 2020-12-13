@@ -128,7 +128,7 @@ def histogram(input, num_bins, filename, title = None, xlabel = None, ylabel = N
     # f-string allows save filepath to be set inside the plt.savefig() function
     plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)
 
-def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None, clear = True, **plot_kwargs):
+def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None, clear = True, legend = False, save = True, **plot_kwargs):
     """Creates and saves a plot of data from two 1-D arrays input by the user.
 
     Ensures that there are the same number of x-values as there are y-values before plotting data.
@@ -142,6 +142,8 @@ def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None,
         xlabel: x-axis label (default set to None).
         ylabel: y-axis label (default set to None).
         clear: Clear previous figure(s) (default set to True).
+        legend: Show legend on plot (default set to False).
+        save: Saves figure according to filename argument (default set to True).
         **plot_kwargs: Optional input arguments for the plot. If any of these are invalid, then an exception is raised within
                       the Matplotlib package.
 
@@ -162,9 +164,12 @@ def plot(x_input, y_input, filename, title = None, xlabel = None, ylabel = None,
         plt.xlabel(xlabel)
     if ylabel != None:
         plt.ylabel(ylabel)
-        
-    # f-string allows save filepath to be set inside the plt.savefig() function
-    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)
+    if legend:
+        plt.legend()
+
+    if save:    
+        # f-string allows save filepath to be set inside the plt.savefig() function
+        plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder (filepath set using the 'os' package)
 
 def surf_plot(x, y, z, filename, title = None, xlabel = None, ylabel = None, zlabel = None, elev = 0, azim = 0, **surf_kwargs):
     """Creates a surface plot based on three input arrays (x,y,z).

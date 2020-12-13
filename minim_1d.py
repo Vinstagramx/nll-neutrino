@@ -168,8 +168,8 @@ class Minimise1D():
             else:
                 self._y[ind] = self._func(val)
     
-    def std_theta(self, return_all = False):
-        """Calculates the standard deviation of the minimising parameter (in this case the mixing angle).
+    def std_change(self, return_all = False):
+        """Calculates the standard deviation of the minimising parameter (in this case the mixing angle) using the change in the parabola.
         
         The parameter (in this case the mixing angle) is shifted incrementally in both directions, until the NLL has increased by an absolute value of 0.5.
         At this point, a shift of one standard deviation has occurred. To calculate the standard deviation, the shifts in both directions are averaged.
@@ -210,7 +210,21 @@ class Minimise1D():
         else:
             self._std_stats = std  # Variable consists of standard deviation only
 
-        return self._std_stats  # Returns variable
+        return self._std_stats  # Returns stats variable
+
+    def std_gauss(self):
+        """Calculates the standard deviation by approximating the NLL as a Gaussian distribution around the minimum.
+
+        Finds the error in the (negative) log-likelihood for a single measurement.
+        The sample size is taken to be N = 200, as 200 distinct energy values are used to calculate the NLL.
+
+        Returns:
+            self._std_gauss: Standard deviation calculated using the Gaussian approximation.
+        """
+        std = self._min / np.sqrt(200)
+        self._std_gauss = std
+        
+        return self._std_gauss
 
     """
     Getters to access the private member variables outside the class.

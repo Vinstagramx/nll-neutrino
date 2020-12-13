@@ -11,7 +11,7 @@ class NLL():
     """
 
     def __init__(self, energies, event_rates, obs_events, mix_ang = np.pi/4, distance = 295, sq_mass_diff = 2.4e-3):
-        """Initialisation of the EventRate class.
+        """Initialisation of the NLL class.
 
         Input arguments are saved internally within the class, and used when the class methods are called.
         Ensures that the energy midpoints and the simulated event rates are inputted as NumPy arrays of equal length.
