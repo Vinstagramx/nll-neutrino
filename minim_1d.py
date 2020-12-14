@@ -1,6 +1,5 @@
 # Importing relevant package
 import numpy as np
-import random
 from nll import NLL
 
 class ParameterError(Exception):
@@ -10,6 +9,16 @@ class ParameterError(Exception):
         message: Explanation of the error.
     """
     def __init__(self, message = "Please specify either the 'theta' or the 'mass' parameters for NLL minimisation!"):
+        self.message = message
+        print(self.message)  # Prints error message in console.
+
+class MinimisationError(Exception):
+    """Exception raised when the user attempts to calculate standard deviation without having minimised the function.
+
+    Attributes:
+        message: Explanation of the error.
+    """
+    def __init__(self, message = "Parabolic minimisation must have occurred before calculating the standard deviation!"):
         self.message = message
         print(self.message)  # Prints error message in console.
 
@@ -56,7 +65,6 @@ class Minimise1D():
         if nll_param == 'mass':
             self._mass = True
 
-
         # Saving inputs as private member variables for later use
         self._init_range = init_range 
         self._data = nll_data
@@ -81,9 +89,8 @@ class Minimise1D():
         Returns:
             self._min: Value of the parameter which minimises the function.
         """
-
         self._minimum_found = False  # Flag for the minimum being found
-        self._prev_min = 1  # Previous value of the minimum (will be overwritten)
+        prev_min = 1  # Previous value of the minimum (will be overwritten)
         self._iterations = 0
         while not self._minimum_found:
             # Finding the minimum of the interpolating quadratic polynomial (P_2(x))
@@ -94,23 +101,26 @@ class Minimise1D():
             minimum = 0.5 * numerator / denominator
 
             max_ind = np.argmax(self._y)  # Index of maximum y-value
-            self._x[max_ind] = minimum  # Replace the x-value which gives the maximum y-value with the approximated minimum
+            self._x[max_ind] = minimum  # Replace the x-value which gives the maximum y-value, with the approximated minimum
             # Replacing the corresponding y-value (i.e. f(x_min))
             if self._nll:
                 self._y[max_ind] = self.calc_nll(minimum)  # Calls the calc_nll() function
             else:
                 self._y[max_ind] = self._func(minimum)  # Uses function passed into the minimisation object
             
-            # Calculating relative difference between subsequent minima.
-            # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
-            rel_diff = abs(self._prev_min - minimum)/self._prev_min  
-            if rel_diff < 1e-3 and self._iterations > 0:
-                self._minimum_found = True  # Flag triggered
-                # Saves minimising parameter and minimum function value as private member variables
-                self._min = minimum
-                self._min_func = self._y[max_ind]
+            if self._iterations == 0:  # No need to calculate relative difference for the first iteration
+                prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
             else:
-                self._prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
+                # Calculating relative difference between subsequent minima.
+                # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
+                rel_diff = abs(prev_min - minimum)/prev_min  
+                if rel_diff < 1e-3:
+                    self._minimum_found = True  # Flag triggered
+                    # Saves minimising parameter and minimum function value as private member variables
+                    self._min = minimum
+                    self._min_func = self._y[max_ind]
+                else:
+                    prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
             
             self._iterations += 1  # Increments iteration counter by 1
         
@@ -121,6 +131,9 @@ class Minimise1D():
 
         Creates an instance of the imported NLL class, in order to calculate the NLL value for a given mixing angle
         or squared mass difference.
+
+        Args:
+            val: Value of mixing angle or squared mass difference for which the NLL is to be calculated for.
 
         Returns:
             nll: Value of NLL calculated.
@@ -149,7 +162,7 @@ class Minimise1D():
     def gen_init_points(self):
         """Calculates the initial x and y points to be used in the parabolic minimisation.
 
-        Finds 3 random values within the range specified during initialisation, so they can be used as the initial parameter x-values
+        Finds 3 random values within the range specified, which can be used as the initial parameter x-values
         for the first iteration of the parabolic minimisation. Also calculates the corresponding y-values by feeding the x-values into
         either the NLL calculation function calc_nll() or the function passed in during initialisation.
         These x- and y-values are saved as private member variables to be used by other methods.
@@ -181,7 +194,14 @@ class Minimise1D():
         Returns:
             self._std_stats: Calculated standard deviation and related stats are returned in a list if return_all is set to True.
                              Only the standard deviation is returned if return_all is set to False.
+        
+        Raises:
+            MinimisationError: If the standard deviation method is called without minimisation previously occurring.
         """
+        # Checking that minimisation has been carried out
+        if not self._minimum_found:
+            raise MinimisationError()
+        
         # Setting a limit for the NLL iterations - i.e. value of minimum NLL + 0.5 
         nll_lim = self._min_func + 0.5
 
@@ -220,7 +240,14 @@ class Minimise1D():
 
         Returns:
             self._std_gauss: Standard deviation calculated using the Gaussian approximation.
+
+        Raises:
+            MinimisationError: If the standard deviation method is called without minimisation previously occurring.
         """
+        # Checking that minimisation has been carried out
+        if not self._minimum_found:
+            raise MinimisationError()
+
         std = self._min / np.sqrt(200)
         self._std_gauss = std
         

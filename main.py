@@ -1,7 +1,9 @@
+# Importing relevant modules
 from download_data import data_to_csv  # Importing method to download data using shortcode
 import plots  # Plotting module
 from nll import NLL  # Module which generates the oscillated event rate
 from minim_1d import Minimise1D  # Parabolic minimisation module
+from minim_2d import Minimise2D  # 2-D minimisation module
 
 # Importing relevant packages
 import matplotlib.pyplot as plt
@@ -151,65 +153,66 @@ Section 3.4 - Parabolic Minimisation
 # As the NLL function has period π/2, we take the first period to investigate it in more detail:
 data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D object
 
-# Investigating the left local minimum:
-# Creating a Minimise1D object for parabolic minimisation
-min_obj = Minimise1D(init_range = [0.55, 0.78], nll = True, nll_param = 'theta', nll_data = data)  # The first range of [0.55,0.78] was chosen by inspection of the previous plot
-min_theta = min_obj.para_min()
-print("--- Left Minimum ---")
-print(f"Mixing Angle which minimises NLL: {min_theta}")
-print(f"NLL value: {min_obj.min_func}")
-print(f"Iterations: {min_obj.iterations}")
+# # Investigating the left local minimum:
+# # Creating a Minimise1D object for parabolic minimisation
+# min_obj = Minimise1D(init_range = [0.55, 0.78], nll = True, nll_param = 'theta', nll_data = data)  # The first range of [0.55,0.78] was chosen by inspection of the previous plot
+# min_theta = min_obj.para_min()
+# print("--- Left Minimum ---")
+# print(f"Mixing Angle which minimises NLL: {min_theta}")
+# print(f"NLL value: {min_obj.min_func}")
+# print(f"Iterations: {min_obj.iterations}")
 
-# Investigating the right local minimum:
-# Creating a Minimise1D object for parabolic minimisation
-min_obj2 = Minimise1D(init_range = [0.795, 1.02], nll = True, nll_param = 'theta', nll_data = data)  # The second range of [0.795,1.02] was chosen by inspection of the previous plot
-min_theta2 = min_obj2.para_min()
-print("--- Right Minimum ---")
-print(f"Mixing Angle which minimises NLL: {min_theta2}")
-print(f"NLL value: {min_obj2.min_func}")
-print(f"Iterations: {min_obj2.iterations}")
+# # Investigating the right local minimum:
+# # Creating a Minimise1D object for parabolic minimisation
+# min_obj2 = Minimise1D(init_range = [0.795, 1.02], nll = True, nll_param = 'theta', nll_data = data)  # The second range of [0.795,1.02] was chosen by inspection of the previous plot
+# min_theta2 = min_obj2.para_min()
+# print("--- Right Minimum ---")
+# print(f"Mixing Angle which minimises NLL: {min_theta2}")
+# print(f"NLL value: {min_obj2.min_func}")
+# print(f"Iterations: {min_obj2.iterations}")
 
-# What if range includes both local minima?
-min_obj3 = Minimise1D(init_range = [0.2, 1.2], nll = True, nll_param = 'theta', nll_data = data)
-min_theta3 = min_obj3.para_min()
-print("--- Minimising over both local minima ---")
-print(f"Mixing Angle which minimises NLL: {min_theta3}")
-print(f"NLL value: {min_obj3.min_func}")
-print(f"Iterations: {min_obj3.iterations}")
+# # What if range includes both local minima?
+# min_obj3 = Minimise1D(init_range = [0.2, 1.2], nll = True, nll_param = 'theta', nll_data = data)
+# min_theta3 = min_obj3.para_min()
+# print("--- Minimising over both local minima ---")
+# print(f"Mixing Angle which minimises NLL: {min_theta3}")
+# print(f"NLL value: {min_obj3.min_func}")
+# print(f"Iterations: {min_obj3.iterations}")
 
-# Testing the minimisation on an arbitrary function:
-def parabola(x):
-  return x ** 2 - 2 * x + 1  # Parabola with minimum at (1,0)
-# Creating a Minimise1D object for parabolic minimisation
-min_obj4 = Minimise1D(init_range = [-5, 5], nll = False, nll_param = None, nll_data = None, func = parabola)
-min_x = min_obj4.para_min()
-print("--- Parabola Function: y = x^2 - 2x + 1 ---")
-print(f"x-value which minimises f(x): {min_x}")
-print(f"y-value: {min_obj4.min_func}")
-print(f"Iterations: {min_obj4.iterations}")
+# # Testing the minimisation on an arbitrary function:
+# def parabola(x):
+#   return x ** 2 - 2 * x + 1  # Parabola with minimum at (1,0)
+# # Creating a Minimise1D object for parabolic minimisation
+# min_obj4 = Minimise1D(init_range = [-5, 5], nll = False, nll_param = None, nll_data = None, func = parabola)
+# min_x = min_obj4.para_min()
+# print("--- Parabola Function: y = x^2 - 2x + 1 ---")
+# print(f"x-value which minimises f(x): {min_x}")
+# print(f"y-value: {min_obj4.min_func}")
+# print(f"Iterations: {min_obj4.iterations}")
 
-"""
-Section 3.5 - Accuracy of Parabolic Fit
-- An estimate of the standard deviation of the mixing angle is then found using the change in the NLL.
-- A second estimate is then found by looking at the curvature of the NLL around the minimum:
-  --> i.e. the negative log likelihood can be approximated as an inverted Gaussian around the minimum.
-  --> This allows us to obtain a reasonable estimate for σ.
-"""
-# Finding standard deviation (and corresponding error measurements) using the change in the NLL:
-std_arr = min_obj2.std_change(return_all = True)  # Using the same Minimise1D object as for the right local minimum (of the first period)
-print("--- Calculating Standard Deviation (Right Local Minimum) ---")
-print("--> Using Change in NLL:")
-print(f"Standard deviation of θ: {std_arr[0]}")
-print(f"θ+, θ-: ({std_arr[1]}, {std_arr[2]})")
-print(f"Corresponding NLL values: ({std_arr[3]}, {std_arr[4]})")
+# """
+# Section 3.5 - Accuracy of Parabolic Fit
+# - An estimate of the standard deviation of the mixing angle is then found using the change in the NLL.
+# - A second estimate is then found by looking at the curvature of the NLL around the minimum:
+#   --> i.e. the negative log likelihood can be approximated as an inverted Gaussian around the minimum.
+#   --> This allows us to obtain a reasonable estimate for σ.
+# """
+# # Finding standard deviation (and corresponding error measurements) using the change in the NLL:
+# std_arr = min_obj2.std_change(return_all = True)  # Using the same Minimise1D object as for the right local minimum (of the first period)
+# print("--- Calculating Standard Deviation (Right Local Minimum) ---")
+# print("--> Using Change in NLL:")
+# print(f"Standard deviation of θ: {std_arr[0]}")
+# print(f"θ+, θ-: ({std_arr[1]}, {std_arr[2]})")
+# print(f"Corresponding NLL values: ({std_arr[3]}, {std_arr[4]})")
 
-# Finding standard deviarion using Gaussian approximation:
-print("--> Using Gaussian Approximation:")
-print(f"Standard deviation of θ: {min_obj2.std_gauss()}")
-"""
-Section 4 - Preliminary Investigations
-- Using values around the minimising value of theta, the behaviour of the NLL with varying squared mass difference is then investigated.
-"""
+# # Finding standard deviarion using Gaussian approximation:
+# print("--> Using Gaussian Approximation:")
+# print(f"Standard deviation of θ: {min_obj2.std_gauss()}")
+
+# """
+# Section 4 - Preliminary Investigations
+# - Using values around the minimising value of theta, the behaviour of the NLL with varying squared mass difference is then investigated.
+# """
 # num_m = 500  # Number of squared mass differences to investigate
 # m_arr = np.linspace(1e-4, 1e-2, num_m)  # Generating an array of squared mass differences from [10^-4,10^-2]
 # thetas = [min_theta2 - 0.15, min_theta2, min_theta2 + 0.15, min_theta2 + 0.3]
@@ -238,3 +241,14 @@ Section 4 - Preliminary Investigations
   
 #   plot_counter += 1  # Increments counter by 1
 
+"""
+Section 4.1 - Univariate 2-D minimisation
+"""
+min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
+min_2d.univ_min(first = 'x')
+
+print("--- 2-D Minimisation ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Iterations: {min_2d.iterations}")
