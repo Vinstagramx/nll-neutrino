@@ -217,7 +217,46 @@ def surf_plot(x, y, z, filename, title = None, xlabel = None, ylabel = None, zla
     ax.view_init(elev=elev, azim=azim)  # Sets 'camera angle' of surface plot, for saving
     # f-string allows save filepath to be set inside the plt.savefig() function
     plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
+
+def contour(X, Y, Z, filename, colorbar = True, fill = False, title = None, xlabel = None, ylabel = None, **cont_kwargs):
+    """Creates a contour plot based on three input arrays (X,Y,Z).
+
+    Checks that the input arrays (X, Y, Z) are of the same length before plotting.
+    Options to include a colour bar, axes labels, as well as the title are available. Optional plot arguments are also supported.
+    There is also an option to have filled contours instead of the default contour lines.
+
+    Args:
+        X: Input list or NumPy array of x-coordinates.
+        Y: Input list or NumPy array of y-coordinates.
+        Z: Input list or NumPy array of z-coordinates.
+        filename: Filename of output plot (to be saved within the 'plots' folder).
+        colorbar: Option to include a colourbar (default set to True).
+        fill: Option to have filled contours (default set to False).
+        title: Title of plot (default set to None).
+        xlabel: x-axis label (default set to None).
+        ylabel: y-axis label (default set to None). 
+        **cont_kwargs: Optional input arguments for the surface plot. If any of these are invalid, then an exception is raised within
+                       the Matplotlib package.
     
+    Raises:
+        LengthError: If the lengths of the inputs (x, y and z) are not equal.
+    """
+    # Checking length of input arrays
+    if len(X) != len(Y) != len(Z):
+        raise LengthError()
+
+    plot_settings(clear = True, grid = False)  # Defining plot settings
+    if fill:
+        plt.contourf(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with filled contours)
+    else:
+        plt.contour(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with contour lines)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    if colorbar:
+        plt.colorbar()
+    plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
+
 def spare():
     plt.show()
     plt.pause(40)

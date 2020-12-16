@@ -259,6 +259,28 @@ class Minimise2D():
                 self._min_iters_y += 1
 
         return self._min  # Returns coordinate tuple containing minimising parameter
+    
+    def gen_start_pt(self):
+        """Generates a starting point for iteration of the 2-D minimisation schemes (excluding univariate).
+
+        Picks a random coordinate from the x- and y- initialisation ranges used, and saves this coordinate as 
+        a private member variable, in the form of a tuple.
+        """
+        x_init = np.random.uniform(self._init_range_x[0], self._init_range_x[1])
+        y_init = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
+        self._coord = (x_init, y_init)
+
+    def grad_min(self, alpha):
+        """Gradient minimisation method for 2 dimensions.
+
+        Follows the steepest descent in gradient towards the minimum. This is done by calculating the gradient using a forward
+        difference scheme, and taking a small step α in the direction opposite the gradient (as the gradient is perpendicular to the local contour line).
+        The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
+        """
+
+        d = np.empty(2)  # Gradient vector
+        d[0] = (self.calc_nll(self._coord[0] + alpha, self._coord[1]) - self.calc_nll(self._coord[0], self._coord[1]) / alpha)
+        d[1] = (self.calc_nll(self._coord[0], self._coord[1] + alpha) - self.calc_nll(self._coord[0], self._coord[1]) / alpha)
 
     """
     Getters to access the private member variables outside the class.
