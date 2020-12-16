@@ -93,14 +93,16 @@ class Minimise2D():
             self._x = np.empty(3)
             for i in range(0, 3):
                 val = np.random.uniform(self._init_range_x[0], self._init_range_x[1])
-            self._x[i] = val
-            self._ymin = np.mean(self._init_range_y)  # Setting arbitrary y-minimum within the range (will eventually be overwritten)
+                self._x[i] = val
+            if self._iterations == 0:
+                self._ymin = np.mean(self._init_range_y)  # Setting arbitrary y-minimum within the range (will eventually be overwritten)
         if param == 'y':
             self._y = np.empty(3)
             for i in range(0, 3):
-                val = np.random.uniform(self._init_range_y[0], self._init_range_y[2])
-            self._y[i] = val
-            self._xmin = np.mean(self._init_range_x)  # Setting arbitrary x-minimum within the range (will eventually be overwritten)
+                val = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
+                self._y[i] = val
+            if self._iterations == 0:
+                self._xmin = np.mean(self._init_range_x)  # Setting arbitrary x-minimum within the range (will eventually be overwritten)
 
         # Calculating function values for initial parabolic minimisation
         self._f = np.empty(3)
@@ -117,6 +119,9 @@ class Minimise2D():
                 else:
                     self._f[ind] = self._func(self._xmin, val)
 
+        if self._iterations != 0:
+            print(self._y, self._f)
+
     def univ_min(self, first = 'x'):
         """Univariate method for 2-D minimisation.
 
@@ -125,8 +130,6 @@ class Minimise2D():
         if first not in ['x','y']:
             raise ValueError("Parameter specified must be either 'x' or 'y'!")
 
-        # Calculating three initial coordinate points for each parameter to begin minimisation
-        self.gen_init_points(first)
         if first == 'x':
             xycounter = 0  # Counter needed to allow minimisation to occur in the other direction after every iteration
         if first == 'y':
@@ -146,21 +149,27 @@ class Minimise2D():
             prev_min = 1
             while not self._minimum_found:  # Directional minimum found
                 remainder = xycounter % 2
-                if remainder == 0:
-                    coords = self._x
-                    self._direction = 'x'  # Direction of minimisation
-                else:
-                    coords = self._y
-                    self._direction = 'y'
+                if self._dir_iters == 0:  # First directional iteration
+                    if remainder == 0:
+                        self.gen_init_points('x')  # Calculating three initial coordinate points for x-parameter to begin minimisation
+                        coords = self._x
+                        self._direction = 'x'  # Direction of minimisation
+                    else:
+                        self.gen_init_points('y')  # Calculating three initial coordinate points for y-parameter to begin minimisation
+                        coords = self._y
+                        self._direction = 'y'
+
                 # Finding the minimum of the interpolating quadratic polynomial (P_2(x))
                 numerator = ((coords[2] ** 2) - (coords[1] ** 2)) * self._f[0] + ((coords[0] ** 2) - (coords[2] ** 2)) * self._f[1] \
                             + ((coords[1] ** 2) - (coords[0] ** 2)) * self._f[2]
                 denominator = (coords[2] - coords[1]) * self._f[0] + (coords[0] - coords[2]) * self._f[1] \
                                 + (coords[1] - coords[0]) * self._f[2]
+                # print(numerator, denominator)
                 minimum = 0.5 * numerator / denominator
 
                 max_ind = np.argmax(self._f)  # Index of maximum function value
                 coords[max_ind] = minimum  # Replace the coordinate value which gives the maximum function value, with the approximated minimum
+
                 # Replacing the corresponding function value
                 if self._direction == 'x':  # If currently minimising in x-direction
                     if self._nll:
@@ -175,46 +184,54 @@ class Minimise2D():
                 
                 if self._dir_iters == 0:  # No need to calculate relative difference for the first iteration
                     prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
+                    print('FIRST ITER', self._direction, minimum)
                 else:
                     # Calculating relative difference between subsequent minima.
                     # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
+                    print(self._direction, 'iters =', self._iterations, prev_min, minimum)
                     rel_diff = abs(prev_min - minimum)/prev_min  
                     if rel_diff < 1e-3:
                         self._minimum_found = True  # Flag triggered
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
-                            xmin = minimum
+                            self._xmin = minimum
+                            print(minimum, self._iterations)
                         else:
-                            ymin = minimum
-                        self._dir_min_func = self._y[max_ind]  # Directional minimum function value
+                            self._ymin = minimum
+                            print(minimum, self._iterations)
+
+                        self._dir_min_func = self._f[max_ind]  # Directional minimum function value
                     else:
                         prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
-                
+                        # print(prev_min)
                 self._dir_iters += 1
                 self._iterations += 1  # Increments iteration counter by 1
-            
-            if self._direction == 'x':
-                if self._min_iters_x == 0:
-                    prev_xmin = xmin
-                else: 
-                    self._rel_diff_x = abs(prev_xmin - xmin)/prev_xmin
-                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        self._overall_minimum_found = True
-                        self._min = (xmin, prev_ymin)
-                    else:
-                        prev_xmin = xmin
-            else:
-                if self._min_iters_y == 0:
-                    prev_ymin = ymin
-                else: 
-                    self._rel_diff_y = abs(prev_ymin - ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        self._overall_minimum_found = True
-                        self._min = (prev_xmin, ymin)
-                    else:
-                        prev_ymin = ymin
 
             xycounter += 1
+            if self._direction == 'x':
+                if self._min_iters_x == 0:
+                    prev_xmin = self._xmin
+                    self._min_iters_x += 1
+                else: 
+                    self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin
+                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
+                        self._overall_minimum_found = True
+                        self._min = (self._xmin, prev_ymin)
+                    else:
+                        prev_xmin = self._xmin
+            else:
+                if self._min_iters_y == 0:
+                    prev_ymin = self._ymin
+                    self._min_iters_y += 1
+                else: 
+                    self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
+                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
+                        self._overall_minimum_found = True
+                        self._min = (prev_xmin, self._ymin)
+                    else:
+                        prev_ymin = self._ymin
+
+            
            
         return self._min  # Returns minimising parameter
 
