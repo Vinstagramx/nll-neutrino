@@ -171,7 +171,7 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
 # print(f"NLL value: {min_obj2.min_func}")
 # print(f"Iterations: {min_obj2.iterations}")
 
-# # What if range includes both local minima?
+# # What if range includes both local minima? --> don't need
 # min_obj3 = Minimise1D(init_range = [0.2, 1.2], nll = True, nll_param = 'theta', nll_data = data)
 # min_theta3 = min_obj3.para_min()
 # print("--- Minimising over both local minima ---")
@@ -243,12 +243,23 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
 
 """
 Section 4.1 - Univariate 2-D minimisation
+- Note: x refers to the mixing angle, and y refers to the squared mass difference.
 """
+data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
+# Creating a Minimise2D object for univariate minimisation
 min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
+# Minimising the mixing angle (x-direction) first
 min_2d.univ_min(first = 'x')
-
-print("--- 2-D Minimisation ---")
+print("--- 2-D Minimisation (Mixing Angle first) ---")
 print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 print(f"NLL value: {min_2d.dir_min_func}")
-print(f"Iterations: {min_2d.iterations}")
+print(f"Iterations: {min_2d.iterations} --> x-direction: {min_2d.min_iters_x}, y-direction: {min_2d.min_iters_y}")
+
+# Minimising the squared mass difference (y-direction) first
+min_2d.univ_min(first = 'y')
+print("--- 2-D Minimisation (Squared Mass Diff first)---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Iterations: {min_2d.iterations} --> x-direction: {min_2d.min_iters_x}, y-direction: {min_2d.min_iters_y}")

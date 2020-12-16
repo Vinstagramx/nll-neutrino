@@ -125,6 +125,8 @@ class Minimise2D():
                 else:
                     self._f[ind] = self._func(self._xmin, val)
 
+        if self._iterations != 0:
+            print(self._y, self._f)
 
     def univ_min(self, first = 'x'):
         """Univariate method for 2-D minimisation.
@@ -135,9 +137,6 @@ class Minimise2D():
 
         Args:
             first: Direction to first search for the minimum in (Choice between 'x' and 'y').
-        
-        Raises:
-            ValueError: If the first minimisation direction is neither 'x' nor 'y'.
         """
         # Checking for errors in the input
         if first not in ['x','y']:
@@ -201,60 +200,56 @@ class Minimise2D():
                         self._f[max_ind] = self._func(self._xmin, minimum)
                 
                 if self._dir_iters == 0:  # No need to calculate relative difference for the first iteration
-                    prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration in this current direction
+                    prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
+                    print('FIRST ITER', self._direction, minimum)
                 else:
-                    # Calculating relative difference between subsequent minima (in this current direction).
+                    # Calculating relative difference between subsequent minima.
                     # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
+                    print(self._direction, 'iters =', self._iterations, prev_min, minimum)
                     rel_diff = abs(prev_min - minimum)/prev_min  
                     if rel_diff < 1e-3:
                         self._minimum_found = True  # Flag triggered
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
                             self._xmin = minimum
+                            print(minimum, self._iterations)
                         else:
                             self._ymin = minimum
+                            print(minimum, self._iterations)
 
                         self._dir_min_func = self._f[max_ind]  # Directional minimum function value
                     else:
                         prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
+                        # print(prev_min)
+                self._dir_iters += 1
+                self._iterations += 1  # Increments iteration counter by 1
 
-                self._dir_iters += 1  # Increments current direction iteration counter by 1
-                self._iterations += 1  # Increments total iteration counter by 1
-                # End of inner while-loop
-
-            xycounter += 1  # Counter incremented to change the direction of minimisation upon the next iteration of loop
-            # If the inner loop has been iterating in the x-direction (i.e. x-minimum has just been found):
+            xycounter += 1
             if self._direction == 'x':
-                if self._min_iters_x == 0:  # If first x-minimisation (i.e. no previous x-minimum available for comparison)
-                    prev_xmin = self._xmin  # Sets previous x-minimum variable equal to the found minimum
+                if self._min_iters_x == 0:
+                    prev_xmin = self._xmin
                 else: 
-                    # Calculation of relative difference between successive x-direction minima
-                    self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
+                    self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin
                     if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold, then triggers
-                        # the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
-                        self._min = (self._xmin, prev_ymin)  # Saves minimum (x,y) coordinate as a tuple
+                        self._min = (self._xmin, prev_ymin)
                     else:
-                        prev_xmin = self._xmin  # If convergence condition not met, sets previous x-minimum variable equal to the found minimum
-                self._min_iters_x += 1  # Increments x-minimisation counter by 1
-
-            # If the inner loop has been iterating in the y-direction (i.e. x-minimum has just been found):
+                        prev_xmin = self._xmin
+                self._min_iters_x += 1
             else:
-                if self._min_iters_y == 0:  # If first y-minimisation (i.e. no previous y-minimum available for comparison)
-                    prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
+                if self._min_iters_y == 0:
+                    prev_ymin = self._ymin
+
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
                     if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold, then triggers
-                        # the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
-                        self._min = (prev_xmin, self._ymin)  # Saves minimum (x,y) coordinate as a tuple
+                        self._min = (prev_xmin, self._ymin)
                     else:
                         prev_ymin = self._ymin
                 self._min_iters_y += 1
 
-        return self._min  # Returns coordinate tuple containing minimising parameter
+        return self._min  # Returns minimising parameter
 
     """
     Getters to access the private member variables outside the class.
@@ -271,12 +266,4 @@ class Minimise2D():
     @property
     def dir_min_func(self):
         return self._dir_min_func
-    
-    @property
-    def min_iters_x(self):
-        return self._min_iters_x
-    
-    @property
-    def min_iters_y(self):
-        return self._min_iters_y
 

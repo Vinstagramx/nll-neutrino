@@ -167,7 +167,7 @@ class Minimise1D():
         either the NLL calculation function calc_nll() or the function passed in during initialisation.
         These x- and y-values are saved as private member variables to be used by other methods.
         """
-        # Choosing random existing points to start off the parabolic minimisation
+        # Choosing random x-points to start off the parabolic minimisation
         self._x = np.empty(3)
         for i in range(0, 3):
             val = np.random.uniform(self._init_range[0], self._init_range[1])
