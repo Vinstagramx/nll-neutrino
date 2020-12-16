@@ -153,7 +153,9 @@ class Minimise2D():
         # Initialising previous values of the minima in both directions (will be overwritten)
         prev_xmin = 1
         prev_ymin = 1
-        # x- and y- direction minimisation counters
+        # x- and y- direction parabolic iteration and minimisation counters
+        self._x_iters = 0
+        self._y_iters = 0
         self._min_iters_x = 0
         self._min_iters_y = 0
 
@@ -194,19 +196,21 @@ class Minimise2D():
                         self._f[max_ind] = self.calc_nll(minimum, self._ymin)  # Calls the calc_nll() function using previous y-minimum
                     else:
                         self._f[max_ind] = self._func(minimum, self._ymin)  # Uses function passed into the minimisation object
+                    self._x_iters += 1  # Incrementing x-direction iteration counter by 1
                 else:  # If currently minimising in y-direction
                     if self._nll:
                         self._f[max_ind] = self.calc_nll(self._xmin, minimum)  # Calls the calc_nll() function using previous x-minimum
                     else:
                         self._f[max_ind] = self._func(self._xmin, minimum)
+                    self._y_iters += 1  # Incrementing x-direction iteration counter by 1
                 
                 if self._dir_iters == 0:  # No need to calculate relative difference for the first iteration
                     prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration in this current direction
                 else:
                     # Calculating relative difference between subsequent minima (in this current direction).
-                    # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
+                    # If this difference is less than 0.001% of the previous minima, the flag is triggered and the while loop is exited.
                     rel_diff = abs(prev_min - minimum)/prev_min  
-                    if rel_diff < 1e-3:
+                    if rel_diff < 1e-5:
                         self._minimum_found = True  # Flag triggered
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
@@ -230,9 +234,9 @@ class Minimise2D():
                 else: 
                     # Calculation of relative difference between successive x-direction minima
                     self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
-                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold, then triggers
-                        # the overall_minimum_found' flag and exits the loop after this iteration
+                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
+                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
+                        # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
                         self._min = (self._xmin, prev_ymin)  # Saves minimum (x,y) coordinate as a tuple
                     else:
@@ -245,9 +249,9 @@ class Minimise2D():
                     prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-3 and self._rel_diff_y < 1e-3:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold, then triggers
-                        # the overall_minimum_found' flag and exits the loop after this iteration
+                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
+                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
+                        # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
                         self._min = (prev_xmin, self._ymin)  # Saves minimum (x,y) coordinate as a tuple
                     else:
@@ -280,3 +284,10 @@ class Minimise2D():
     def min_iters_y(self):
         return self._min_iters_y
 
+    @property
+    def x_iters(self):
+        return self._x_iters
+    
+    @property
+    def y_iters(self):
+        return self._y_iters

@@ -112,9 +112,9 @@ class Minimise1D():
                 prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration
             else:
                 # Calculating relative difference between subsequent minima.
-                # If this difference is less than 0.1% of the previous minima, the flag is triggered and the while loop is exited.
+                # If this difference is less than 0.001% of the previous minima, the flag is triggered and the while loop is exited.
                 rel_diff = abs(prev_min - minimum)/prev_min  
-                if rel_diff < 1e-3:
+                if rel_diff < 1e-5:
                     self._minimum_found = True  # Flag triggered
                     # Saves minimising parameter and minimum function value as private member variables
                     self._min = minimum
