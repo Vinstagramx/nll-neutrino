@@ -268,15 +268,15 @@ Section 4.1 - Univariate 2-D Minimisation
 data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
 # Creating a Minimise2D object for univariate minimisation
 min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
-# # Minimising the mixing angle (x-direction) first
-# min_2d.univ_min(first = 'x')
-# print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.dir_min_func}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
-# print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+# Minimising the mixing angle (x-direction) first
+min_2d.univ_min(first = 'x')
+print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
+print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
 
 # # Minimising the squared mass difference (y-direction) first
 # min_2d.univ_min(first = 'y')
@@ -291,9 +291,17 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
 """
 Section 4.2 - Testing Simultaneous Minimisation Schemes
 """
-# Gradient scheme
-min_2d.grad_min(alpha = 1e-7)
-print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
+# Gradient scheme - Note this takes a long time to run (~3k iterations)
+# min_2d.grad_min(alpha = 2e-7)
+# print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.nll_min}")
+# print(f"Total iterations: {min_2d.iterations}")
+
+# Quasi-Newton scheme
+min_2d.quasi_newton_min(alpha = 2e-7)
+print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
 print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 print(f"NLL value: {min_2d.nll_min}")
