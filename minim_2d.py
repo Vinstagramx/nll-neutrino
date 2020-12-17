@@ -264,23 +264,54 @@ class Minimise2D():
         """Generates a starting point for iteration of the 2-D minimisation schemes (excluding univariate).
 
         Picks a random coordinate from the x- and y- initialisation ranges used, and saves this coordinate as 
-        a private member variable, in the form of a tuple.
+        a private member variable, in the form of a NumPy array.
+
+        Returns:
+            coord: Starting coordinate for the given minimisation scheme.
         """
         x_init = np.random.uniform(self._init_range_x[0], self._init_range_x[1])
         y_init = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
-        self._coord = (x_init, y_init)
+        coord = np.array([x_init, y_init])
+        return coord
 
     def grad_min(self, alpha):
         """Gradient minimisation method for 2 dimensions.
 
         Follows the steepest descent in gradient towards the minimum. This is done by calculating the gradient using a forward
         difference scheme, and taking a small step α in the direction opposite the gradient (as the gradient is perpendicular to the local contour line).
+        However, α was scaled so that it has an equivalent relative magnitude in both coordinate directions, for optimal efficiency. 
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
         """
+        self._iterations = 0
+        self._minimum_found = False
+        self._prev_coord = self.gen_start_pt()  # Generating starting position
+        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)  # Scaling factor
+        print(scaling)
+        # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
+        alpha_x = alpha
+        alpha_y = alpha_x / scaling 
+        while not self._minimum_found:
+            d = np.empty(2)  # Gradient vector
+            d[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_x
+            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_y
+            new_coord = self._prev_coord - (alpha * d)
+            if self._iterations == 0:
+                self._prev_coord = new_coord
+            else:
+                rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
+                rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
+                if rel_diff_x < 1e-5 and rel_diff_y < 1e-5:
+                    self._minimum_found = True
+                    self._min = new_coord
+                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                else:
+                    self._prev_coord = new_coord
+                    print(new_coord, 'iterations:' , self._iterations)
+            
+            self._iterations += 1
+        
+        return self._min
 
-        d = np.empty(2)  # Gradient vector
-        d[0] = (self.calc_nll(self._coord[0] + alpha, self._coord[1]) - self.calc_nll(self._coord[0], self._coord[1]) / alpha)
-        d[1] = (self.calc_nll(self._coord[0], self._coord[1] + alpha) - self.calc_nll(self._coord[0], self._coord[1]) / alpha)
 
     """
     Getters to access the private member variables outside the class.
@@ -297,6 +328,10 @@ class Minimise2D():
     @property
     def dir_min_func(self):
         return self._dir_min_func
+    
+    @property
+    def nll_min(self):
+        return self._nll_min
     
     @property
     def min_iters_x(self):

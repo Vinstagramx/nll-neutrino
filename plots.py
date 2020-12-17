@@ -226,9 +226,9 @@ def contour(X, Y, Z, filename, colorbar = True, fill = False, title = None, xlab
     There is also an option to have filled contours instead of the default contour lines.
 
     Args:
-        X: Input list or NumPy array of x-coordinates.
-        Y: Input list or NumPy array of y-coordinates.
-        Z: Input list or NumPy array of z-coordinates.
+        X: Input list or NumPy array of x-coordinates (in grid form).
+        Y: Input list or NumPy array of y-coordinates (in grid form).
+        Z: Input list or NumPy array of z-coordinates (in grid form).
         filename: Filename of output plot (to be saved within the 'plots' folder).
         colorbar: Option to include a colourbar (default set to True).
         fill: Option to have filled contours (default set to False).
@@ -250,6 +250,7 @@ def contour(X, Y, Z, filename, colorbar = True, fill = False, title = None, xlab
         plt.contourf(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with filled contours)
     else:
         plt.contour(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with contour lines)
+    # Setting plot parameters
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)

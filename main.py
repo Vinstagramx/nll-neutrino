@@ -212,7 +212,7 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
 # """
 # Section 4 - Preliminary Investigations
 # - Using values around the minimising value of theta, the behaviour of the NLL with varying squared mass difference is then investigated.
-# - Also plotted a contour plot to further investigate the behaviour.
+# - Also created contour plots to further investigate the behaviour.
 # """
 # num_m = 500  # Number of squared mass differences to investigate
 # m_arr = np.linspace(1e-4, 1e-2, num_m)  # Generating an array of squared mass differences from [10^-4,10^-2]
@@ -242,35 +242,35 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
   
 #   plot_counter += 1  # Increments counter by 1
 
-# # Plotting a contour plot
+# # Creating contour plots
 # x_theta = np.linspace(0.3, 1.2, 50)  # Array of mixing angles
 # y_mass = np.linspace(5e-4, 5e-3, 50)  # Array of squared mass differences
-# X, Y = np.meshgrid(x_theta, y_mass)  
+# X, Y = np.meshgrid(x_theta, y_mass)  # Forms two 'grids' of X and Y data
 # z_nll = np.empty((50,50))  # Empty 2-D array initialised for the NLL values
-# # Calculating 500 x 500 NLL values for the contour plot
+# # Calculating 50 x 50 NLL values for the contour plot
 # for i in range(0, len(x_theta)):
 #   for j in range(0, len(y_mass)):
-#     nll_contour = NLL(en_array, event_no, exp_data, mix_ang = x_theta[i], distance = L, sq_mass_diff = y_mass[j])
+#     nll_contour = NLL(en_array, event_no, exp_data, mix_ang = X[i][j], distance = L, sq_mass_diff = Y[i][j])
 #     nll_contour.surv_prob()
 #     nll_contour.calc_lambda()
 #     z_nll[i][j] = nll_contour.find_nll()  # Calculating the NLL
 # # Contour line plot
-# plots.contour(X, Y, z_nll, filename = "contour", colorbar = True, fill = False, \
+# plots.contour(X, Y, z_nll, filename = "contour", colorbar = False, fill = False, \
 #               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
 # # Filled contour plot
 # plots.contour(X, Y, z_nll, filename = "contour_fill", colorbar = True, fill = True, \
 #               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
 
-# """
-# Section 4.1 - Univariate 2-D minimisation
-# - Note: x refers to the mixing angle, and y refers to the squared mass difference.
-# """
-# data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
-# # Creating a Minimise2D object for univariate minimisation
-# min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
+"""
+Section 4.1 - Univariate 2-D Minimisation
+- Note: x refers to the mixing angle, and y refers to the squared mass difference.
+"""
+data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
+# Creating a Minimise2D object for univariate minimisation
+min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data)
 # # Minimising the mixing angle (x-direction) first
 # min_2d.univ_min(first = 'x')
-# print("--- 2-D Minimisation (Mixing Angle first) ---")
+# print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
 # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 # print(f"NLL value: {min_2d.dir_min_func}")
@@ -280,10 +280,21 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
 
 # # Minimising the squared mass difference (y-direction) first
 # min_2d.univ_min(first = 'y')
-# print("--- 2-D Minimisation (Squared Mass Diff first)---")
+# print("--- 2-D Univariate Minimisation (Squared Mass Diff first)---")
 # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 # print(f"NLL value: {min_2d.dir_min_func}")
 # print(f"Total iterations: {min_2d.iterations}")
 # print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
 # print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+
+"""
+Section 4.2 - Testing Simultaneous Minimisation Schemes
+"""
+# Gradient scheme
+min_2d.grad_min(alpha = 1e-7)
+print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
