@@ -292,8 +292,8 @@ class Minimise2D():
         alpha_vec = np.array([alpha_x, alpha_y])
         while not self._minimum_found:
             d = np.empty(2)  # Gradient vector
-            d[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_x
-            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_y
+            d[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
+            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
             new_coord = self._prev_coord - (alpha_vec * d)
             if self._iterations == 0:  # If first iteration
                 self._prev_coord = new_coord
@@ -311,6 +311,48 @@ class Minimise2D():
         
         return self._min
 
+    def newton_min(self, alpha):
+        self._iterations = 0
+        self._minimum_found = False
+        self._prev_coord = self.gen_start_pt()  # Generating starting position
+        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)  # Scaling factor
+        alpha_x = alpha
+        alpha_y = alpha_x / scaling 
+        while not self._minimum_found:
+            # Finding the gradient vector using central differencing
+            grad = np.empty(2)
+            grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
+            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
+            hessian = np.empty((2,2))  # Initialising the Hessian matrix
+            # Calculating the Hessian using central-difference approximation
+            hessian[0,0] = ((-1 * self.calc_nll(self._prev_coord[0] + 2 * alpha_x, self._prev_coord[1])) + (16 * self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1])) \
+                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) \
+                            - self.calc_nll(self._prev_coord[0] - 2 * alpha_x, self._prev_coord[1])) / 12 * (alpha_x ** 2)
+            hessian[1,1] = ((-1 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * alpha_y)) + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y)) \
+                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) \
+                            - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - 2 * alpha_y)) / 12 * (alpha_y ** 2)
+            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] - alpha_y) \
+                            - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] - alpha_y)) / (4 * alpha_x * alpha_y) 
+            hessian[1,0] = hessian[0,1]
+            # Calculating the next coordinate step
+            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian), grad)
+            print(new_coord)
+            if self._iterations == 0:  # If first iteration
+                self._prev_coord = new_coord
+            else:
+                rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
+                rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
+                if rel_diff_x < 1e-6 and rel_diff_y < 1e-6:
+                    self._minimum_found = True
+                    self._min = new_coord
+                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                    if new_coord.all() == self._prev_coord.all():  
+                        self._iterations -= 1   # If coordinate values from subsequent iterations are the same, don't need to count current iteration
+                else:
+                    self._prev_coord = new_coord
+            self._iterations += 1
+        return self._min
+
     def quasi_newton_min(self, alpha):
         self._iterations = 0
         self._minimum_found = False
@@ -320,14 +362,15 @@ class Minimise2D():
         alpha_x = alpha
         alpha_y = alpha_x / scaling 
         alpha_vec = np.array([alpha_x, alpha_y])
-        G = np.identity(2)  # G (Hessian approximation) is equal to the identity matrix for the first iteration.
+        G = np.identity(2)  # G (inverse Hessian approximation) is equal to the identity matrix for the first iteration.
         self._grad = np.empty(2)  # Initialising the gradient vector
         while not self._minimum_found:
             # Updating the coordinate x_n
             if self._iterations == 0:
                 # Need to compute the gradient vector for the first iteration (grad is updated during the calculations of updating G for later iterations)
-                self._grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_x
-                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / alpha_y
+                # --> Central difference scheme used to compute gradient vector
+                self._grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
+                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
 
             new_coord = self._prev_coord - (alpha_vec * np.matmul(G, self._grad))
             # print(new_coord, 'iterations:', self._iterations)
@@ -345,23 +388,23 @@ class Minimise2D():
                     # If the initial convergence condition is not fulfilled
                     delta_n = new_coord - self._prev_coord  # Calculating the vector δ_n
                     new_grad = np.empty(2)
-                    new_grad[0] = (self.calc_nll(new_coord[0] + alpha_x, new_coord[1]) - self.calc_nll(new_coord[0], new_coord[1])) / alpha_x
-                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + alpha_y) - self.calc_nll(new_coord[0], new_coord[1])) / alpha_y
+                    new_grad[0] = (self.calc_nll(new_coord[0] + alpha_x, new_coord[1]) - self.calc_nll(new_coord[0] - alpha_x, new_coord[1])) / (2 * alpha_x)
+                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + alpha_y) - self.calc_nll(new_coord[0], new_coord[1] - alpha_y)) / (2 * alpha_y)
                     gamma_n = new_grad - self._grad  # Calculating the vector γ_n
                     gd_prod = np.dot(gamma_n, delta_n)
                     # print(delta_n * gamma_n, 'iterations:', self._iterations)
                     # Alternative convergence condition - if gamma_n * delta_n is equal to zero
-                    # This also means that the step size is sufficiently small (as G cannot be updated due to division by zero)
+                    # This also means that the step size is sufficiently small (G also cannot be updated due to division by zero)
                     if gd_prod == 0:
                         self._minimum_found = True
                         self._min = new_coord
                         self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
                     else:
                         # If there is no convergence, the vector G, ∇f, and the current coordinate are updated before the next iteration.
-                        # Updating the Hessian approximation matrix G using the DFP algorithm
-                        outer_prod = np.outer(delta_n, delta_n)
-                        next_G = G + (outer_prod/(gd_prod)) - \
-                                (np.matmul(G, (np.matmul(outer_prod, G))) / np.matmul(gamma_n, np.matmul(G, gamma_n)))
+                        # Updating the inverse Hessian approximation matrix G using the DFP (Davidon-Fletcher-Powell) algorithm
+                        outer_prod_d = np.outer(delta_n, delta_n)
+                        next_G = G + (outer_prod_d/(gd_prod)) - \
+                                  (np.matmul(G, (np.matmul(outer_prod_d, G))) / np.matmul(gamma_n, np.matmul(G, gamma_n)))
                         G = next_G
                         # Updating parameters for next iteration
                         self._prev_coord = new_coord  # Update current coordinate ('prev_coord' - coordinate found from previous iteration)

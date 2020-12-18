@@ -28,7 +28,7 @@ def data_to_csv(shortcode):
     """
 
     # Checking that shortcode is of correct format using regex (may be different for lecturers - CHECK)
-    format_check = re.match("^[a-z]{2,3}[0-9]{0,3}(1[0-9]|20)$", shortcode)
+    format_check = re.match("^[a-z]{2,3}[0-9]{0,5}(1[0-9]|20)$", shortcode)
     correct_format = bool(format_check)
     if not correct_format:
         raise ShortcodeError()

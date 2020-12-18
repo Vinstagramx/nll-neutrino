@@ -291,7 +291,7 @@ print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min
 """
 Section 4.2 - Testing Simultaneous Minimisation Schemes
 """
-# Gradient scheme - Note this takes a long time to run (~3k iterations)
+# # Gradient scheme - Note this takes a long time to run (~3k iterations)
 # min_2d.grad_min(alpha = 2e-7)
 # print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
@@ -299,10 +299,19 @@ Section 4.2 - Testing Simultaneous Minimisation Schemes
 # print(f"NLL value: {min_2d.nll_min}")
 # print(f"Total iterations: {min_2d.iterations}")
 
-# Quasi-Newton scheme
+# # Newton scheme
+# min_2d.newton_min(alpha = 2e-10)
+# print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.nll_min}")
+# print(f"Total iterations: {min_2d.iterations}")
+
+# Quasi-Newton scheme - Note this also takes a long time to run (~3k iterations)
 min_2d.quasi_newton_min(alpha = 2e-7)
 print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
 print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 print(f"NLL value: {min_2d.nll_min}")
 print(f"Total iterations: {min_2d.iterations}")
+
