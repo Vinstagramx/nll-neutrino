@@ -10,7 +10,7 @@ class NLL():
     --> needs edit after section 5
     """
 
-    def __init__(self, energies, event_rates, obs_events, mix_ang = np.pi/4, distance = 295, sq_mass_diff = 2.4e-3):
+    def __init__(self, energies, event_rates, obs_events, mix_ang = np.pi/4, distance = 295, sq_mass_diff = 2.4e-3, cross_sec = None):
         """Initialisation of the NLL class.
 
         Input arguments are saved internally within the class, and used when the class methods are called.
@@ -23,6 +23,7 @@ class NLL():
             mix_ang: Mixing angle, in radians (default value pi/4).
             distance: Distanced travelled by the muon neutrino, in km.
             sq_mass_diff: Difference between the squared masses of the two neutrinos, in eV^2.
+            cross_sec: Constant of proportionality (α) of cross section increase with energy (default set to None).
 
         Raises:
             AttributeError: If the NumPy arrays 'energies', 'event_rates' and 'obs_events' are not of the same length.
@@ -41,6 +42,7 @@ class NLL():
         self._mix_ang = mix_ang
         self._dist = distance
         self._sq_mass_diff = sq_mass_diff
+        self._cross_sec = cross_sec
 
         # Initialising flags for later checks (to see if methods have been carried out)
         self._probs_found = False
@@ -73,6 +75,7 @@ class NLL():
         Takes the element-wise product of the survival probability and the simulated event rate NumPy arrays to calculate
         λ for each bin. The resulting array of oscillated event rates is then returned.
         Checks that the survival probabilities have been found before calculation.
+        Takes into account the cross-sectional scaling factor (α) if it is inputted during initialisation. 
 
         Returns:
             self._lambdas: Array of oscillated event rates.
@@ -84,6 +87,10 @@ class NLL():
         if not self._probs_found:
             raise AttributeError('Please calculate survival probabilities using surv_prob() before finding oscillated event rates.')
         lambda_u = self._probs * self._event_rates  # Multiplication to find list of λ
+
+        if self._cross_sec is not None:
+            # Taking into account the constant of proportionality/scaling factor of cross section increase with energy
+            lambda_u *= self._cross_sec * self._energies 
 
         self._lambdas = lambda_u  # Saving the array of λs within the class for later use
         self._lambdas_found = True 

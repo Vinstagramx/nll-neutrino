@@ -2,14 +2,14 @@
 import numpy as np
 from nll import NLL
 
-class Minimise2D():
-    """Class which carries out 2-D minimisation, using either univariate or simultaneous minimisation methods.
+class Minimise3D():
+    """Class which carries out 3-D minimisation, using either univariate or simultaneous minimisation methods.
 
     Given an input function (of which the most commonly used throughout this project is the NLL), and also optional
     minimisation parameters (in the case of the NLL), the parameter values which give the minimum value of the function
     can be found using the minimisation methods in this class.
     """
-    def __init__(self, init_range_x, init_range_y, nll = True, nll_data = None, func = None):
+    def __init__(self, init_range_x, init_range_y, init_range_z, nll = True, nll_data = None, func = None):
         """Initialisation of the Minimise2D class.
 
         Checks that the initialisation ranges (for the parameter in question) are of the correct format.
@@ -18,6 +18,7 @@ class Minimise2D():
         Args:
             init_range_x: Initial guess range for arbitrary x-parameter (mixing angle for the NLL case), in the form [lower_val, upper_val].
             init_range_y: Initial guess range for arbitrary y-parameter (squared mass diff. for the NLL case), in the form [lower_val, upper_val].
+            init_range_z: Initial guess range for arbitrary z-parameter (cross-section prop. constant for the NLL case), in the form [lower_val, upper_val].
             nll: Flag to indicate that the function to be minimised is the NLL (i.e. parameters to be minimised for are θ_23 and squared mass diff.).
             nll_data: Data to be passed into NLL objects to be created.
             func: Function to be minimised (if not NLL).
@@ -29,7 +30,7 @@ class Minimise2D():
             ParameterError: If the function to be minimised is the NLL, but no parameters are specified.
         """
         # Checking for input errors
-        if len(init_range_x) != 2 or len(init_range_y) != 2:
+        if len(init_range_x) != 2 or len(init_range_y) != 2 or len(init_range_z) != 2:
             raise AttributeError("Input ranges must be a list or NumPy array of length 2!")
         if init_range_x[0] > init_range_x[1] or init_range_y[0] > init_range_y[1]:
             raise ValueError("Input ranges must be in the form [lower_value, upper_value].")
@@ -39,13 +40,14 @@ class Minimise2D():
         # Saving inputs as private member variables for later use
         self._init_range_x = init_range_x
         self._init_range_y = init_range_y 
+        self._init_range_z = init_range_z
         self._data = nll_data  # Saves data needed for NLL calculation within the class
         self._nll = nll  # Boolean flag
         if func != None:
             self._func = func  # Saves function to be minimised within class
         
 
-    def calc_nll(self, theta, mass):
+    def calc_nll(self, theta, mass, cross_sec):
         """Calculates the Negative Log Likelihood using the NLL class from nll.py.
 
         Creates an instance of the imported NLL class, in order to calculate the NLL value for a given mixing angle
@@ -54,7 +56,8 @@ class Minimise2D():
         Args:
             theta: Neutrino mixing angle.
             mass: Squared mass difference of neutrinos.
-
+            cross_sec: Constant of proportionality/scaling factor of cross section increase with energy.
+            
         Returns:
             nll: Value of NLL calculated.
         """
@@ -62,7 +65,7 @@ class Minimise2D():
         L = 295
 
         # Finding the NLL according to the input mixing angle or the squared mass difference. Uses data passed in during initialisation.
-        nll_obj = NLL(energies = self._data[0], event_rates = self._data[1], obs_events = self._data[2], mix_ang = theta, distance = L, sq_mass_diff = mass)
+        nll_obj = NLL(energies = self._data[0], event_rates = self._data[1], obs_events = self._data[2], mix_ang = theta, distance = L, sq_mass_diff = mass, cross_sec = cross_sec)
         nll_obj.surv_prob()
         nll_obj.calc_lambda()
         nll = nll_obj.find_nll() 
@@ -85,8 +88,8 @@ class Minimise2D():
             ValueError: If the parameter argument entered is neither 'x' nor 'y'.
         """
         # Checking for errors in the input
-        if param not in ['x','y']:
-            raise ValueError("Parameter specified must be either 'x' or 'y'!")
+        if param not in ['x','y','z']:
+            raise ValueError("Parameter specified must be either 'x', 'y' or 'z'!")
 
         # Choosing random points to start off the parabolic minimisation in the direction chosen
         if param == 'x':
@@ -96,9 +99,10 @@ class Minimise2D():
                 val = np.random.uniform(self._init_range_x[0], self._init_range_x[1]) 
                 self._x[i] = val
             if self._iterations == 0:
-                # If the first minimisation is in the x-direction, then we choose the y-minimum to be the midpoint 
-                # of the initialisation range given (this will then later be overwritten during y-direction minimisation)
+                # If the first minimisation is in the x-direction, then we choose the y- and z- minima to be the midpoints
+                # of their given initialisation ranges (these will then later be overwritten during minimisation in those directions)
                 self._ymin = np.mean(self._init_range_y)  
+                self._zmin = np.mean(self._init_range_z)
         if param == 'y':
             self._y = np.empty(3)
             # Choosing 3 random values within the (y) initialisation range
@@ -106,38 +110,56 @@ class Minimise2D():
                 val = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
                 self._y[i] = val
             if self._iterations == 0:
-                # If the first minimisation is in the y-direction, then we choose the x-minimum to be the midpoint 
-                # of the initialisation range given (this will then later be overwritten during x-direction minimisation)
+                # If the first minimisation is in the y-direction, then we choose the x- and z- minima to be the midpoints
+                # of their given initialisation ranges (these will then later be overwritten during minimisation in those directions)
                 self._xmin = np.mean(self._init_range_x)
+                self._zmin = np.mean(self._init_range_z)
+        if param == 'z':
+            self._z = np.empty(3)
+            # Choosing 3 random values within the (z) initialisation range
+            for i in range(0, 3):
+                val = np.random.uniform(self._init_range_z[0], self._init_range_z[1])
+                self._z[i] = val
+            if self._iterations == 0:
+                # If the first minimisation is in the z-direction, then we choose the x- and y- minima to be the midpoints
+                # of their given initialisation ranges (these will then later be overwritten during minimisation in those directions)
+                self._xmin = np.mean(self._init_range_x)
+                self._ymin = np.mean(self._init_range_y)
 
         # Calculating function values for initial parabolic minimisation (f(x,y))
         self._f = np.empty(3)
         if param == 'x':
             for ind, val in enumerate(self._x):
                 if self._nll:
-                    self._f[ind] = self.calc_nll(theta = val, mass = self._ymin)  # Generating NLL values for mixing angle minimisation
+                    self._f[ind] = self.calc_nll(theta = val, mass = self._ymin, cross_sec = self._zmin)  # Generating NLL values for mixing angle minimisation
                 else:
                     self._f[ind] = self._func(val, self._ymin)  # Generating function values (if the function to be minimised is not the NLL)
         if param == 'y':
             for ind, val in enumerate(self._y):
                 if self._nll:
-                    self._f[ind] = self.calc_nll(theta = self._xmin, mass = val)  # Generating NLL values for square mass diff. minimisation
+                    self._f[ind] = self.calc_nll(theta = self._xmin, mass = val, cross_sec = self._zmin)  # Generating NLL values for square mass diff. minimisation
                 else:
                     self._f[ind] = self._func(self._xmin, val)  # Generating function values (if the function to be minimised is not the NLL)
+        if param == 'z':
+            for ind, val in enumerate(self._z):
+                if self._nll:
+                    self._f[ind] = self.calc_nll(theta = self._xmin, mass = self._ymin, cross_sec = val)  # Generating NLL values for square mass diff. minimisation
+                else:
+                    self._f[ind] = self._func(self._xmin, val)  # Generating function values (if the function to be minimised is not the NLL)       
 
 
     def univ_min(self, first = 'x'):
-        """Univariate method for 2-D minimisation.
+        """Univariate method for 3-D minimisation.
 
         Applies a parabolic minimisation algorithm in the first minimisation direction given until the minimum value is found.
-        Then searches for the minimum in the second direction, using the minimum found for the first direction as a function input.
-        Minimises in alternating directions until a convergence condition is satisfied, meaning that the overall minimum is found.
+        Then searches for the minimum in the second and third directions, using the minimum found for the previous directions as a function input.
+        Minimises in alternating directions (x --> y --> z) until a convergence condition is satisfied, meaning that the overall minimum is found.
 
         Args:
             first: Direction to first search for the minimum in (Choice between 'x' and 'y').
         
         Raises:
-            ValueError: If the first minimisation direction is neither 'x' nor 'y'.
+            ValueError: If the first minimisation direction is not 'x', 'y', or 'z'.
         """
         # Checking for errors in the input
         if first not in ['x','y']:
@@ -147,17 +169,22 @@ class Minimise2D():
             xycounter = 0  # Counter needed to allow minimisation to occur in the other direction after every iteration
         if first == 'y':
             xycounter = 1
+        if first == 'z':
+            xycounter = 2
 
-        self._overall_minimum_found = False  # Flag for the overall minimum being found (in both directions)
+        self._overall_minimum_found = False  # Flag for the overall minimum being found (in all 3 directions)
         self._iterations = 0  # Total iteration counter
         # Initialising previous values of the minima in both directions (will be overwritten)
         prev_xmin = 1
         prev_ymin = 1
-        # x- and y- direction parabolic iteration and minimisation counters
+        prev_zmin = 1
+        # Directional parabolic iteration and minimisation counters
         self._x_iters = 0
         self._y_iters = 0
+        self._z_iters = 0
         self._min_iters_x = 0
         self._min_iters_y = 0
+        self._min_iters_z = 0
 
         # Outer while-loop: Iterates until the overall minimum is found
         while not self._overall_minimum_found:
@@ -167,17 +194,21 @@ class Minimise2D():
             prev_min = 1  # Previous directional minimum (will be overwritten)
             # Inner while-loop: Iterates until a directional minimum is found
             while not self._minimum_found:  
-                remainder = xycounter % 2  # Modulo operation to change the direction of minimisation with every increment of xycounter
+                remainder = xycounter % 3  # Modulo operation to change the direction of minimisation with every increment of xycounter
                 # If this is the first directional iteration, generate initial coordinate points and function values
                 if self._dir_iters == 0:
                     if remainder == 0:
                         self.gen_init_points('x')  # Calculating three initial coordinate points for x-parameter to begin minimisation
                         coords = self._x
                         self._direction = 'x'  # Direction of minimisation
-                    else:
+                    elif remainder == 1:
                         self.gen_init_points('y')  # Calculating three initial coordinate points for y-parameter to begin minimisation
                         coords = self._y
                         self._direction = 'y'
+                    else:
+                        self.gen_init_points('z')  # Calculating three initial coordinate points for z-parameter to begin minimisation
+                        coords = self._z
+                        self._direction = 'z'                       
 
                 # Finding the minimum of the interpolating quadratic polynomial (P_2(x))
                 numerator = ((coords[2] ** 2) - (coords[1] ** 2)) * self._f[0] + ((coords[0] ** 2) - (coords[2] ** 2)) * self._f[1] \
@@ -192,16 +223,22 @@ class Minimise2D():
                 # Replacing the corresponding function value
                 if self._direction == 'x':  # If currently minimising in x-direction
                     if self._nll:
-                        self._f[max_ind] = self.calc_nll(minimum, self._ymin)  # Calls the calc_nll() function using previous y-minimum
+                        self._f[max_ind] = self.calc_nll(minimum, self._ymin, self._zmin)  # Calls the calc_nll() function using previous directional minima
                     else:
-                        self._f[max_ind] = self._func(minimum, self._ymin)  # Uses function passed into the minimisation object
+                        self._f[max_ind] = self._func(minimum, self._ymin, self._zmin)  # Uses function passed into the minimisation object
                     self._x_iters += 1  # Incrementing x-direction iteration counter by 1
-                else:  # If currently minimising in y-direction
+                elif self._direction == 'y':  # If currently minimising in y-direction
                     if self._nll:
-                        self._f[max_ind] = self.calc_nll(self._xmin, minimum)  # Calls the calc_nll() function using previous x-minimum
+                        self._f[max_ind] = self.calc_nll(self._xmin, minimum, self._zmin)  # Calls the calc_nll() function using previous directional minima
                     else:
-                        self._f[max_ind] = self._func(self._xmin, minimum)
+                        self._f[max_ind] = self._func(self._xmin, minimum, self._zmin)
                     self._y_iters += 1  # Incrementing y-direction iteration counter by 1
+                else:
+                    if self._nll:
+                        self._f[max_ind] = self.calc_nll(self._xmin, self._ymin, minimum)  # Calls the calc_nll() function using previous directional minima
+                    else:
+                        self._f[max_ind] = self._func(self._xmin, self._ymin, minimum)
+                    self._z_iters += 1  # Incrementing z-direction iteration counter by 1
                 
                 if self._dir_iters == 0:  # No need to calculate relative difference for the first iteration
                     prev_min = minimum  # Set prev_min variable equal to current minimum for next iteration in this current direction
@@ -214,8 +251,10 @@ class Minimise2D():
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
                             self._xmin = minimum
-                        else:
+                        elif self._direction == 'y':
                             self._ymin = minimum
+                        else:
+                            self._zmin = minimum
 
                         self._dir_min_func = self._f[max_ind]  # Directional minimum function value
                     else:
@@ -233,37 +272,50 @@ class Minimise2D():
                 else: 
                     # Calculation of relative difference between successive x-direction minima
                     self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
-                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
+                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5 and self._rel_diff_z < 1e-5:
+                        # Convergence condition: If x-, y-, and z- relative differences are below the threshold (less than 0.001% of previous minimum),
                         # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
-                        self._min = (self._xmin, prev_ymin)  # Saves minimum (x,y) coordinate as a tuple
+                        self._min = (self._xmin, prev_ymin, prev_zmin)  # Saves minimum (x,y,z) coordinate
                     else:
                         prev_xmin = self._xmin  # If convergence condition not met, sets previous x-minimum variable equal to the found minimum
                 self._min_iters_x += 1  # Increments x-minimisation counter by 1
 
-            # If the inner loop has been iterating in the y-direction (i.e. x-minimum has just been found):
-            else:
+            # If the inner loop has been iterating in the y-direction (i.e. y-minimum has just been found):
+            elif self._direction == 'y':
                 if self._min_iters_y == 0:  # If first y-minimisation (i.e. no previous y-minimum available for comparison)
                     prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
-                        # then triggers the 'overall_minimum_found' flag and exits the loop after this iteration
+                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5 and self._rel_diff_z < 1e-5:
+                        # Convergence condition
                         self._overall_minimum_found = True
-                        self._min = (prev_xmin, self._ymin)  # Saves minimum (x,y) coordinate as a tuple
+                        self._min = (prev_xmin, self._ymin, prev_zmin)  # Saves minimum (x,y,z) coordinate
                     else:
                         prev_ymin = self._ymin  # If convergence condition not met, sets previous y-minimum variable equal to the found minimum
                 self._min_iters_y += 1
+            
+            # If the inner loop has been iterating in the z-direction (i.e. z-minimum has just been found):
+            else:
+                if self._min_iters_z == 0:  # If first z-minimisation (i.e. no previous z-minimum available for comparison)
+                    prev_zmin = self._zmin  # Sets previous y-minimum variable equal to the found minimum
+                else: 
+                    self._rel_diff_z = abs(prev_zmin - self._zmin)/prev_zmin
+                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5 and self._rel_diff_z < 1e-5:
+                        # Convergence condition
+                        self._overall_minimum_found = True
+                        self._min = (prev_xmin, prev_ymin, self._zmin)  # Saves minimum (x,y,z) coordinate
+                    else:
+                        prev_zmin = self._zmin  # If convergence condition not met, sets previous z-minimum variable equal to the found minimum
+                self._min_iters_z += 1
             # End of outer while-loop
 
         return self._min  # Returns coordinate tuple containing minimising parameter
     
     def gen_start_pt(self):
-        """Generates a starting point for iteration of the 2-D minimisation schemes (excluding univariate).
+        """Generates a starting point for iteration of the 3-D minimisation schemes (excluding univariate).
 
-        Picks a random coordinate from the x- and y- initialisation ranges used, and saves this coordinate as 
+        Picks a random coordinate from the x-, y- and z- initialisation ranges used, and saves this coordinate as 
         a private member variable, in the form of a NumPy array.
 
         Returns:
@@ -272,7 +324,8 @@ class Minimise2D():
         # Finds a random value within each of the initialisation ranges
         x_init = np.random.uniform(self._init_range_x[0], self._init_range_x[1])
         y_init = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
-        coord = np.array([x_init, y_init])  # Coordinate is expressed as a NumPy array of size 2
+        z_init = np.random.uniform(self._init_range_z[0], self._init_range_z[1])
+        coord = np.array([x_init, y_init, z_init])  # Coordinate is expressed as a NumPy array of size 3
         return coord 
 
     def grad_min(self, alpha):
@@ -341,7 +394,6 @@ class Minimise2D():
         scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
         alpha_x = alpha
         alpha_y = alpha_x / scaling 
-        alpha_vec = np.array([alpha_x, alpha_y])
         while not self._minimum_found:
             # Finding the gradient vector using central differencing
             grad = np.empty(2)
@@ -350,19 +402,16 @@ class Minimise2D():
             hessian = np.empty((2,2))  # Initialising the Hessian matrix
             # Calculating each element of the Hessian matrix using central-difference approximation
             hessian[0,0] = ((-1 * self.calc_nll(self._prev_coord[0] + 2 * alpha_x, self._prev_coord[1])) + (16 * self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1])) \
-                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + (16 * self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) \
+                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) \
                             - self.calc_nll(self._prev_coord[0] - 2 * alpha_x, self._prev_coord[1])) / 12 * (alpha_x ** 2)
             hessian[1,1] = ((-1 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * alpha_y)) + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y)) \
-                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) \
+                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) \
                             - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - 2 * alpha_y)) / 12 * (alpha_y ** 2)
             hessian[0,1] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] - alpha_y) \
                             - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] - alpha_y)) / (4 * alpha_x * alpha_y) 
             hessian[1,0] = hessian[0,1]
             # Calculating the next coordinate step
-            new_coord = self._prev_coord - (alpha_vec * np.matmul(np.linalg.inv(hessian), grad))
-            print(alpha_vec * np.matmul(np.linalg.inv(hessian), grad))
-            print('curcoord', self._prev_coord, 'nextcoord', new_coord, 'grad', grad)
-            # print('inv hessian', np.linalg.inv(hessian))
+            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian), grad)
             # print(new_coord)
             if self._iterations == 0: 
                 # No need to calculate relative difference for the first iteration
@@ -371,14 +420,14 @@ class Minimise2D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < 1e-8 and rel_diff_y < 1e-8:
+                if rel_diff_x < 1e-6 and rel_diff_y < 1e-6:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
                     self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
-                    # if new_coord.all() == self._prev_coord.all():  
-                    #     self._iterations -= 1   # If coordinate values from subsequent iterations are the same, don't need to count current iteration
+                    if new_coord.all() == self._prev_coord.all():  
+                        self._iterations -= 1   # If coordinate values from subsequent iterations are the same, don't need to count current iteration
                 else:
                     self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
 
@@ -487,6 +536,10 @@ class Minimise2D():
     @property
     def min_iters_y(self):
         return self._min_iters_y
+    
+    @property
+    def min_iters_z(self):
+        return self._min_iters_z
 
     @property
     def x_iters(self):
@@ -495,3 +548,7 @@ class Minimise2D():
     @property
     def y_iters(self):
         return self._y_iters
+
+    @property
+    def z_iters(self):
+        return self._z_iters
