@@ -2,6 +2,8 @@
 import numpy as np
 from nll import NLL
 
+np.random.seed(1234)  # Setting a random seed so that results can be compared across multiple runs
+
 class Minimise3D():
     """Class which carries out 3-D minimisation, using either univariate or simultaneous minimisation methods.
 
@@ -103,9 +105,8 @@ class Minimise3D():
                     self._ymin = self._start_coord[1]
                     self._zmin = self._start_coord[2]
                     for i in range(1,3):
-                        # Choosing 2 more random values within the (x) initialisation range
-                        # val = np.random.uniform(self._init_range_x[0], self._init_range_x[1]) 
-                        val = self._x[0] + (-1 ** i) * (self._x[0] * 0.005)
+                        # Choosing 2 more values close to the (x) starting coordinate
+                        val = self._x[0] + (self._x[0] * 1e-4) * i
                         self._x[i] = val
                 else:
                     for i in range(0, 3):
@@ -130,9 +131,8 @@ class Minimise3D():
                     self._y[0] = self._start_coord[1]
                     self._zmin = self._start_coord[2]
                     for i in range(1,3):
-                        # Choosing 2 more random values within the (x) initialisation range
-                        # val = np.random.uniform(self._init_range_y[0], self._init_range_y[1])
-                        val = self._y[0] + (self._y[0] * (-1 ** i) * 0.005)
+                        # Choosing 2 more values close to the (y) starting coordinate
+                        val = self._y[0] + (self._y[0] * 1e-4) * i
                         self._y[i] = val
                 else:
                     for i in range(0, 3):
@@ -157,10 +157,8 @@ class Minimise3D():
                     self._ymin = self._start_coord[1]
                     self._z[0] = self._start_coord[2]
                     for i in range(1,3):
-                        # Choosing 2 more random values within the (z) initialisation range
-                        val = np.random.uniform(self._init_range_z[0], self._init_range_z[1]) 
-                        # val = self._z[0] + (self._z[0] * (np.power(-1, i)) * 0.05)
-                        # print(np.power(-1, i))
+                        # Choosing 2 more values close to the (z) starting coordinate
+                        val = self._z[0] + (self._z[0] * 8e-5) * i
                         self._z[i] = val
                 else:
                     for i in range(0, 3):

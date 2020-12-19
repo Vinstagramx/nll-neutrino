@@ -1,7 +1,9 @@
 # Importing relevant packages
 import numpy as np
 from nll import NLL
-
+                    # self._z = [1.12827282, 1.12826929, 1.12827281]
+                    # self._z = [1.125, 1.1251, 1.1252]
+                    # self._z = [1.25, 1.2501, 1.2502]
 class Minimise3D():
     """Class which carries out 3-D minimisation, using either univariate or simultaneous minimisation methods.
 

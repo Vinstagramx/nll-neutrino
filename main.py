@@ -373,11 +373,11 @@ Section 5 - Testing 3-D Minimisation Schemes
 """
 data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
 # Creating a Minimise3D object for univariate minimisation (also used later)
-min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
-# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.675, 2.5e-3, 1.5])
+# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
+min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
 # Minimising the cross-section scaling (z-direction) first
 min_3d.univ_min(first = 'z')
-print("--- 3-D Univariate Minimisation (Mixing Angle first) ---")
+print("--- 3-D Univariate Minimisation (Cross-Section Proportionality first) ---")
 print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
 print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
 print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
