@@ -334,19 +334,22 @@ class Minimise2D():
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
         threshold = 1e-6
+        h = 1e-6  # Step size for finite differencing (in this case the central-difference scheme)
         # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters
         # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
         scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)  
         alpha_x = alpha
         alpha_y = alpha_x / scaling 
         alpha_vec = np.array([alpha_x, alpha_y])  # Alpha is expressed as a vector
+
         while not self._minimum_found:
             # Finding the gradient vector d, using a central differencing scheme
             d = np.empty(2)
-            d[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
-            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
+            d[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
             new_coord = self._prev_coord - (alpha_vec * d)  # Calculation of new coordinate vector
             self._mins_list.append(new_coord)
+            # print(new_coord)
             if self._iterations == 0:
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
@@ -455,7 +458,8 @@ class Minimise2D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
-        threshold = 1e-7
+        threshold = 1e-6
+        h = 1e-6  # Step size for finite differencing (in this case the central-difference scheme)
         # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
         # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
         scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
@@ -469,11 +473,12 @@ class Minimise2D():
             if self._iterations == 0:
                 # Need to compute the gradient vector for the first iteration (grad is updated during the calculations of updating G for later iterations)
                 # --> Central difference scheme used to compute gradient vector
-                self._grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
-                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
+                self._grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
 
             new_coord = self._prev_coord - (alpha_vec * np.matmul(G, self._grad))  # Calculating the new coordinate for this step
             self._mins_list.append(new_coord)  # Appending new coordinate to list
+            print(new_coord)
             if self._iterations == 0:  # No need to check for convergence if first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
             else:
@@ -490,8 +495,9 @@ class Minimise2D():
                     # If the initial convergence condition is not fulfilled
                     delta_n = new_coord - self._prev_coord  # Calculating the vector δ_n
                     new_grad = np.empty(2)
-                    new_grad[0] = (self.calc_nll(new_coord[0] + alpha_x, new_coord[1]) - self.calc_nll(new_coord[0] - alpha_x, new_coord[1])) / (2 * alpha_x)
-                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + alpha_y) - self.calc_nll(new_coord[0], new_coord[1] - alpha_y)) / (2 * alpha_y)
+                    new_grad[0] = (self.calc_nll(new_coord[0] + h, new_coord[1]) - self.calc_nll(new_coord[0] - h, new_coord[1])) / (2 * h)
+                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + h) - self.calc_nll(new_coord[0], new_coord[1] - h)) / (2 * h)            
+
                     gamma_n = new_grad - self._grad  # Calculating the vector γ_n
                     gd_prod = np.dot(gamma_n, delta_n)  # Vector dot product of (γ_n, δ_n)
                     # Alternative convergence condition - if gamma_n * delta_n is equal to zero

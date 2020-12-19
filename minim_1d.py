@@ -235,8 +235,8 @@ class Minimise1D():
     def std_gauss(self):
         """Calculates the standard deviation by approximating the NLL as a Gaussian distribution around the minimum.
 
-        Finds the error in the (negative) log-likelihood for a single measurement.
-        The sample size is taken to be N = 200, as 200 distinct energy values are used to calculate the NLL.
+        Finds the error in the (negative) log-likelihood for a single measurement, using the curvature (second derivative)
+        of the function about the minimum.
 
         Returns:
             self._std_gauss: Standard deviation calculated using the Gaussian approximation.
@@ -247,9 +247,12 @@ class Minimise1D():
         # Checking that minimisation has been carried out
         if not self._minimum_found:
             raise MinimisationError()
-
-        std = self._min / np.sqrt(200)
-        self._std_gauss = std
+        
+        step = 1e-5  # Step for central-difference scheme - assumed same as the step used for the shift 
+        # Calculating the second derivative of the NLL at the minimum
+        second_derivative = ((-1 * self.calc_nll(self._min + 2*step)) + (16 * self.calc_nll(self._min + step))) - (30 * self.calc_nll(self._min)) \
+                            + (16 * self.calc_nll(self._min - step)) - self.calc_nll(self._min - 2 * step) / 12 * (step ** 2)
+        self._std_gauss = 1/second_derivative
         
         return self._std_gauss
 
