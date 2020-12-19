@@ -284,20 +284,20 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # univ_mins = min_2d.mins_list
 # univ_mins = np.vstack(univ_mins)
 
-# # # Minimising the squared mass difference (y-direction) first
-# # min_2d.univ_min(first = 'y')
-# # print("--- 2-D Univariate Minimisation (Squared Mass Diff first)---")
-# # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# # print(f"NLL value: {min_2d.dir_min_func}")
-# # print(f"Total iterations: {min_2d.iterations}")
-# # print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
-# # print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+# # Minimising the squared mass difference (y-direction) first
+# min_2d.univ_min(first = 'y')
+# print("--- 2-D Univariate Minimisation (Squared Mass Diff first)---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.dir_min_func}")
+# print(f"Total iterations: {min_2d.iterations}")
+# print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
+# print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
 
 # """
 # Section 4.2 - Testing Simultaneous Minimisation Schemes
 # """
-# # Gradient scheme - Note this takes a long time to run (~1k iterations)
+# # Gradient scheme - Note this takes some time to run (~1.5k iterations)
 # start = time.time()
 # min_2d.grad_min(alpha = 5e-7)
 # end = time.time()
@@ -310,29 +310,29 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # grad_mins = min_2d.mins_list
 # grad_mins = np.vstack(grad_mins)
 
-# # # Newton scheme
-# # min_2d.newton_min(alpha = 1e-2)
-# # print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
-# # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# # print(f"NLL value: {min_2d.nll_min}")
-# # print(f"Total iterations: {min_2d.iterations}")
-# # newt_mins = min_2d.mins_list
-# # newt_mins = np.vstack(newt_mins)
-# # print(newt_mins[:,0])
-
-# Quasi-Newton scheme - Note this also takes a long time to run (~3.7k iterations)
-start = time.time()
-min_2d.quasi_newton_min(alpha = 5e-7)
-end = time.time()
-print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
+# Newton scheme
+min_2d.newton_min(alpha = 0.25)
+print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
 print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 print(f"NLL value: {min_2d.nll_min}")
 print(f"Total iterations: {min_2d.iterations}")
-print(f"Execution Time: {end-start}s")
-quas_mins = min_2d.mins_list
-quas_mins = np.vstack(quas_mins)
+newt_mins = min_2d.mins_list
+newt_mins = np.vstack(newt_mins)
+print(newt_mins[:,0])
+
+# # Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
+# start = time.time()
+# min_2d.quasi_newton_min(alpha = 5e-7)
+# end = time.time()
+# print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.nll_min}")
+# print(f"Total iterations: {min_2d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# quas_mins = min_2d.mins_list
+# quas_mins = np.vstack(quas_mins)
 
 # # Creating contour plot of 2-D minimisation paths
 # plt.clf()
@@ -406,7 +406,7 @@ Section 5 - Testing 3-D Minimisation Schemes
 # data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
 # # Creating a Minimise3D object for univariate minimisation (also used later)
 # # min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
-# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
+min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
 # # Minimising the cross-section scaling (z-direction) first
 # start = time.time()
 # min_3d.univ_min(first = 'z')
@@ -425,9 +425,9 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(min_3d.start)
 # print(univ_mins[0])
 
-# # Gradient scheme - Note this takes a long time to run (~3k iterations)
+# # Gradient scheme - Note this takes a long time to run (~2.5k iterations)
 # start = time.time()
-# min_3d.grad_min(alpha = 1e-6)
+# min_3d.grad_min(alpha = 1.1e-6)
 # end = time.time()
 # print("--- 3-D Simultaneous Minimisation (Gradient Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")

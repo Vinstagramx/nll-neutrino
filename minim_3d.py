@@ -228,6 +228,7 @@ class Minimise3D():
         self._overall_minimum_found = False  # Flag for the overall minimum being found (in all 3 directions)
         self._iterations = 0  # Total iteration counter
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
+        threshold = 1e-6  # Convergence condition threshold
         if self._start_coord is not None:
             self._mins_list.append(self._start_coord)
         # Initialising previous values of the minima in both directions (will be overwritten)
@@ -276,13 +277,8 @@ class Minimise3D():
                 denominator = (coords[2] - coords[1]) * self._f[0] + (coords[0] - coords[2]) * self._f[1] \
                                 + (coords[1] - coords[0]) * self._f[2]
                 minimum = 0.5 * numerator / denominator
-                print(self._iterations, self._f, self._direction)
-                # if minimum != minimum:
-                #     print(self._direction, coords)
-                #     raise Exception()
 
                 max_ind = np.argmax(self._f)  # Index of maximum function value
-                # print(self._iterations, max_ind)
                 coords[max_ind] = minimum  # Replace the coordinate value which gives the maximum function value, with the approximated minimum
 
                 # Replacing the corresponding function value
@@ -314,7 +310,7 @@ class Minimise3D():
                     # Calculating relative difference between subsequent minima (in this current direction).
                     # If this difference is less than 0.001% of the previous minima, the flag is triggered and the while loop is exited.
                     rel_diff = abs(prev_min - minimum)/prev_min  
-                    if rel_diff < 1e-6:
+                    if rel_diff < threshold:
                         self._minimum_found = True  # Flag triggered
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
@@ -341,7 +337,7 @@ class Minimise3D():
                 else: 
                     # Calculation of relative difference between successive x-direction minima
                     self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < threshold and self._rel_diff_y < threshold and self._rel_diff_z < threshold:
                         # Convergence condition: If x-, y-, and z- relative differences are below the threshold (less than 0.001% of previous minimum),
                         # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
@@ -355,7 +351,7 @@ class Minimise3D():
                     prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < threshold and self._rel_diff_y < threshold and self._rel_diff_z < threshold:
                         # Convergence condition
                         self._overall_minimum_found = True
                         self._min = [prev_xmin, self._ymin, prev_zmin]  # Saves minimum (x,y,z) coordinate
@@ -368,7 +364,7 @@ class Minimise3D():
                     prev_zmin = self._zmin  # Sets previous z-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_z = abs(prev_zmin - self._zmin)/prev_zmin
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < threshold and self._rel_diff_y < threshold and self._rel_diff_z < threshold:
                         # Convergence condition
                         self._overall_minimum_found = True
                         self._min = [prev_xmin, prev_ymin, self._zmin]  # Saves minimum (x,y,z) coordinate
@@ -414,25 +410,28 @@ class Minimise3D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
+        h = 1e-6
+        threshold = 1.5e-5  # Convergence condition threshold
         # As the parameters may have different orders of magnitude, we scale alpha to have the same relative size for all parameters
         # --> The scaling factors are found using the ratio between the means of the initialisation ranges
         # --> For NLL case, y (squared mass diff) is of a different order of magnitude and so a scaling factor is applied
-        scaling1 = np.mean(self._init_range_x) / np.mean(self._init_range_y)
+        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
         alpha_x = alpha
-        alpha_y = alpha_x / scaling1
+        alpha_y = alpha_x / scaling
         alpha_z = alpha_x 
         alpha_vec = np.array([alpha_x, alpha_y, alpha_z])  # Alpha is expressed as a vector
         while not self._minimum_found:
             # Finding the gradient vector d, using a central differencing scheme
             d = np.empty(3)
-            d[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1], self._prev_coord[2]) - \
-                    self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1], self._prev_coord[2])) / (2 * alpha_x)
-            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y, self._prev_coord[2]) - \
-                    self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y, self._prev_coord[2])) / (2 * alpha_y)
-            d[2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + alpha_z) - \
-                    self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - alpha_z)) / (2 * alpha_z)
+            d[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) - \
+                    self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1], self._prev_coord[2])) / (2 * h)
+            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
+                    self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h, self._prev_coord[2])) / (2 * h)
+            d[2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                    self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
             new_coord = self._prev_coord - (alpha_vec * d)  # Calculation of new coordinate vector
             self._mins_list.append(new_coord)  # Saving new coordinate vector
+            print(new_coord)
             if self._iterations == 0:
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
@@ -441,7 +440,7 @@ class Minimise3D():
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 rel_diff_z = abs(self._prev_coord[2] - new_coord[2]) / self._prev_coord[2]
-                if rel_diff_x < 1e-5 and rel_diff_y < 1e-5 and rel_diff_z < 1e-5:
+                if rel_diff_x < threshold and rel_diff_y < threshold and rel_diff_z < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
@@ -503,7 +502,7 @@ class Minimise3D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < 1e-6 and rel_diff_y < 1e-6:
+                if rel_diff_x < threshold and rel_diff_y < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
@@ -534,6 +533,7 @@ class Minimise3D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
+        threshold = 1e-7  # Convergence condition threshold
         # As the parameters may have different orders of magnitude, we scale alpha to have the same relative size for all parameters
         # --> The scaling factors are found using the ratio between the means of the initialisation ranges
         # --> For NLL case, y (squared mass diff) is of a different order of magnitude and so a scaling factor is applied
@@ -565,7 +565,7 @@ class Minimise3D():
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 rel_diff_z = abs(self._prev_coord[2] - new_coord[2]) / self._prev_coord[2]
-                if rel_diff_x < 1e-7 and rel_diff_y < 1e-7 and rel_diff_z < 1e-7:
+                if rel_diff_x < threshold and rel_diff_y < threshold and rel_diff_z < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.00001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
