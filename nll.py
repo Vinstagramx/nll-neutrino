@@ -90,7 +90,7 @@ class NLL():
 
         if self._cross_sec is not None:
             # Taking into account the constant of proportionality/scaling factor of cross section increase with energy
-            lambda_u *= self._cross_sec * self._energies 
+            lambda_u = lambda_u * self._cross_sec * self._energies 
 
         self._lambdas = lambda_u  # Saving the array of λs within the class for later use
         self._lambdas_found = True 

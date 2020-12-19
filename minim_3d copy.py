@@ -247,6 +247,7 @@ class Minimise3D():
         self._rel_diff_x = 1
         self._rel_diff_y = 1
         self._rel_diff_z = 1
+        self._prev_nll = 0
 
         # Outer while-loop: Iterates until the overall minimum is found
         while not self._overall_minimum_found:
@@ -278,10 +279,12 @@ class Minimise3D():
                 denominator = (coords[2] - coords[1]) * self._f[0] + (coords[0] - coords[2]) * self._f[1] \
                                 + (coords[1] - coords[0]) * self._f[2]
                 minimum = 0.5 * numerator / denominator
+                # if abs(minimum - prev_min) < 1e-12:
+                #     minimum = 0
                 print(self._iterations, self._f, self._direction)
-                # if minimum != minimum:
-                #     print(self._direction, coords)
-                #     raise Exception()
+                if minimum != minimum:
+                    print(self._direction, coords)
+                    raise Exception()
 
                 max_ind = np.argmax(self._f)  # Index of maximum function value
                 # print(self._iterations, max_ind)
@@ -290,21 +293,33 @@ class Minimise3D():
                 # Replacing the corresponding function value
                 if self._direction == 'x':  # If currently minimising in x-direction
                     if self._nll:
-                        self._f[max_ind] = self.calc_nll(minimum, self._ymin, self._zmin)  # Calls the calc_nll() function using previous directional minima
+                        min_nll = self.calc_nll(minimum, self._ymin, self._zmin)  # Calls the calc_nll() function using previous directional minima
+                        if any([True if i - min_nll < 1e12 else False for i in self._f]):
+                            self._f[max_ind] = 1000
+                        else:
+                            self._f[max_ind] = min_nll
                     else:
                         self._f[max_ind] = self._func(minimum, self._ymin, self._zmin)  # Uses function passed into the minimisation object
                     self._mins_list.append([minimum, self._ymin, self._zmin])
                     self._x_iters += 1  # Incrementing x-direction iteration counter by 1
                 elif self._direction == 'y':  # If currently minimising in y-direction
                     if self._nll:
-                        self._f[max_ind] = self.calc_nll(self._xmin, minimum, self._zmin)  # Calls the calc_nll() function using previous directional minima
+                        min_nll = self.calc_nll(self._xmin, minimum, self._zmin)  # Calls the calc_nll() function using previous directional minima
+                        if any([True if i - min_nll < 1e12 else False for i in self._f]):
+                            self._f[max_ind] = 1000
+                        else:
+                            self._f[max_ind] = min_nll
                     else:
                         self._f[max_ind] = self._func(self._xmin, minimum, self._zmin)
                     self._mins_list.append([self._xmin, minimum, self._zmin])
                     self._y_iters += 1  # Incrementing y-direction iteration counter by 1
                 else:
                     if self._nll:
-                        self._f[max_ind] = self.calc_nll(self._xmin, self._ymin, minimum)  # Calls the calc_nll() function using previous directional minima
+                        min_nll = self.calc_nll(self._xmin, self._ymin, minimum)  # Calls the calc_nll() function using previous directional minima
+                        if any([True if i - min_nll < 1e12 else False for i in self._f]):
+                            self._f[max_ind] = 1000
+                        else:
+                            self._f[max_ind] = min_nll
                     else:
                         self._f[max_ind] = self._func(self._xmin, self._ymin, minimum)
                     self._mins_list.append([self._xmin, self._ymin, minimum])
@@ -343,7 +358,7 @@ class Minimise3D():
                 else: 
                     # Calculation of relative difference between successive x-direction minima
                     self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < 1e-7 and self._rel_diff_y < 1e-7 and self._rel_diff_z < 1e-7:
                         # Convergence condition: If x-, y-, and z- relative differences are below the threshold (less than 0.001% of previous minimum),
                         # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
@@ -357,7 +372,7 @@ class Minimise3D():
                     prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < 1e-7 and self._rel_diff_y < 1e-7 and self._rel_diff_z < 1e-7:
                         # Convergence condition
                         self._overall_minimum_found = True
                         self._min = [prev_xmin, self._ymin, prev_zmin]  # Saves minimum (x,y,z) coordinate
@@ -370,7 +385,7 @@ class Minimise3D():
                     prev_zmin = self._zmin  # Sets previous z-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_z = abs(prev_zmin - self._zmin)/prev_zmin
-                    if self._rel_diff_x < 1e-6 and self._rel_diff_y < 1e-6 and self._rel_diff_z < 1e-6:
+                    if self._rel_diff_x < 1e-7 and self._rel_diff_y < 1e-7 and self._rel_diff_z < 1e-7:
                         # Convergence condition
                         self._overall_minimum_found = True
                         self._min = [prev_xmin, prev_ymin, self._zmin]  # Saves minimum (x,y,z) coordinate
