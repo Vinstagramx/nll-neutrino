@@ -181,6 +181,7 @@ class Minimise2D():
         self._overall_minimum_found = False  # Flag for the overall minimum being found (in both directions)
         self._iterations = 0  # Total iteration counter
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
+        threshold = 1e-5
         if self._start_coord is not None:
             self._mins_list.append(self._start_coord)
         # Initialising previous values of the minima in both directions (will be overwritten)
@@ -247,7 +248,7 @@ class Minimise2D():
                     # Calculating relative difference between subsequent minima (in this current direction).
                     # If this difference is less than 0.001% of the previous minima, the flag is triggered and the while loop is exited.
                     rel_diff = abs(prev_min - minimum)/prev_min  
-                    if rel_diff < 1e-5:
+                    if rel_diff < threshold:
                         self._minimum_found = True  # Flag triggered
                         # Saves minimising parameter and minimum function value as private member variables
                         if self._direction == 'x':
@@ -262,7 +263,6 @@ class Minimise2D():
                 self._dir_iters += 1  # Increments current direction iteration counter by 1
                 self._iterations += 1  # Increments total iteration counter by 1
                 # End of inner while-loop
-            print(self._iterations, self._direction)
             xycounter += 1  # Counter incremented to change the direction of minimisation upon the next iteration of loop
             # If the inner loop has been iterating in the x-direction (i.e. x-minimum has just been found):
             if self._direction == 'x':
@@ -271,7 +271,7 @@ class Minimise2D():
                 else: 
                     # Calculation of relative difference between successive x-direction minima
                     self._rel_diff_x = abs(prev_xmin - self._xmin)/prev_xmin  # Relative difference saved as private member variable
-                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
+                    if self._rel_diff_x < threshold and self._rel_diff_y < threshold:
                         # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
                         # then triggers the overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
@@ -286,7 +286,7 @@ class Minimise2D():
                     prev_ymin = self._ymin  # Sets previous y-minimum variable equal to the found minimum
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
-                    if self._rel_diff_x < 1e-5 and self._rel_diff_y < 1e-5:
+                    if self._rel_diff_x < threshold and self._rel_diff_y < threshold:
                         # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
                         # then triggers the 'overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
@@ -333,6 +333,7 @@ class Minimise2D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
+        threshold = 1e-6
         # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters
         # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
         scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)  
@@ -353,7 +354,7 @@ class Minimise2D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < 1e-6 and rel_diff_y < 1e-6:
+                if rel_diff_x < threshold and rel_diff_y < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
@@ -383,6 +384,7 @@ class Minimise2D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
+        threshold = 1e-6
         # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
         # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
         scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
@@ -405,11 +407,14 @@ class Minimise2D():
             hessian[0,1] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] - alpha_y) \
                             - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] - alpha_y)) / (4 * alpha_x * alpha_y) 
             hessian[1,0] = hessian[0,1]
+            # print(hessian)
+            # hessian = grad[:, np.newaxis] * (np.eye(2) - grad[np.newaxis, :])
             # Calculating the next coordinate step
-            new_coord = self._prev_coord - (alpha_vec * np.matmul(np.linalg.inv(hessian), grad))
+            new_coord = self._prev_coord - (np.matmul(np.linalg.inv(hessian), grad))
             self._mins_list.append(new_coord)  # Appending new coordinate to list
-            print(alpha_vec * np.matmul(np.linalg.inv(hessian), grad))
-            print('curcoord', self._prev_coord, 'nextcoord', new_coord, 'grad', grad)
+            # print(alpha_vec * np.matmul(np.linalg.inv(hessian), grad))
+            # print('curcoord', self._prev_coord, 'nextcoord', new_coord, 'grad', grad)
+            print(new_coord)
             # print('inv hessian', np.linalg.inv(hessian))
             # print(new_coord)
             if self._iterations == 0: 
@@ -419,7 +424,7 @@ class Minimise2D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < 1e-8 and rel_diff_y < 1e-8:
+                if rel_diff_x < threshold and rel_diff_y < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
@@ -436,6 +441,81 @@ class Minimise2D():
 
 
     def quasi_newton_min(self, alpha):
+        """Quasi-Newton simultaneous minimisation method for 2 dimensions.
+
+        A less computationally intensive approximation of the Newton method, which uses the local gradient to approximate the inverse Hessian.
+        However, the step size used, α, was scaled so that it has an equivalent relative magnitude in both coordinate directions, for optimal efficiency. 
+        The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
+
+        Args:
+            alpha: Size of step used in central-difference scheme.
+        """
+        self._iterations = 0  # Iteration counter
+        self._minimum_found = False  # Flag for the minimum being found
+        self._prev_coord = self.gen_start_pt()  # Generating starting position
+        self._mins_list = []  # Initialising list of minima (for plotting purposes)
+        self._mins_list.append(self._prev_coord)
+        threshold = 1e-7
+        # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
+        # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
+        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
+        alpha_x = alpha
+        alpha_y = alpha_x / scaling 
+        alpha_vec = np.array([alpha_x, alpha_y])  # Alpha is expressed as a vector
+        G = np.identity(2)  # G (inverse Hessian approximation) is equal to the identity matrix for the first iteration.
+        self._grad = np.empty(2)  # Initialising the gradient vector
+        while not self._minimum_found:
+            
+            if self._iterations == 0:
+                # Need to compute the gradient vector for the first iteration (grad is updated during the calculations of updating G for later iterations)
+                # --> Central difference scheme used to compute gradient vector
+                self._grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
+                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
+
+            new_coord = self._prev_coord - (alpha_vec * np.matmul(G, self._grad))  # Calculating the new coordinate for this step
+            self._mins_list.append(new_coord)  # Appending new coordinate to list
+            if self._iterations == 0:  # No need to check for convergence if first iteration
+                self._prev_coord = new_coord  # Updating the coordinate for the next iteration
+            else:
+                # Calculation of relative difference in each direction between successive minima
+                rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
+                rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
+                if rel_diff_x < threshold and rel_diff_y < threshold:
+                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.00001% of previous minimum),
+                    # then triggers the 'minimum_found' flag and exits the loop after this iteration
+                    self._minimum_found = True
+                    self._min = new_coord  # Saving minimum
+                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                else:
+                    # If the initial convergence condition is not fulfilled
+                    delta_n = new_coord - self._prev_coord  # Calculating the vector δ_n
+                    new_grad = np.empty(2)
+                    new_grad[0] = (self.calc_nll(new_coord[0] + alpha_x, new_coord[1]) - self.calc_nll(new_coord[0] - alpha_x, new_coord[1])) / (2 * alpha_x)
+                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + alpha_y) - self.calc_nll(new_coord[0], new_coord[1] - alpha_y)) / (2 * alpha_y)
+                    gamma_n = new_grad - self._grad  # Calculating the vector γ_n
+                    gd_prod = np.dot(gamma_n, delta_n)  # Vector dot product of (γ_n, δ_n)
+                    # Alternative convergence condition - if gamma_n * delta_n is equal to zero
+                    # This also means that the step size is sufficiently small (G also cannot be updated due to division by zero)
+                    if gd_prod == 0:
+                        self._minimum_found = True
+                        self._min = new_coord
+                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                    else:
+                        # If there is no convergence, the vector G, ∇f, and the current coordinate are updated before the next iteration.
+                        # Updating the inverse Hessian approximation matrix G using the DFP (Davidon-Fletcher-Powell) algorithm
+                        outer_prod_d = np.outer(delta_n, delta_n)  # Outer product
+                        next_G = G + (outer_prod_d/(gd_prod)) - \
+                                  (np.matmul(G, (np.matmul(outer_prod_d, G))) / np.matmul(gamma_n, np.matmul(G, gamma_n)))
+                        G = next_G
+                        # Updating parameters for next iteration
+                        self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
+                        self._grad = new_grad  # New gradient vector
+                
+            self._iterations += 1  # Incrementing iteration counter by 1
+
+        return self._min  # Returning the coordinate vector that corresponds to the minimum function value  
+
+    def quasi_LMA_min(self, alpha):
         """Quasi-Newton simultaneous minimisation method for 2 dimensions.
 
         A less computationally intensive approximation of the Newton method, which uses the local gradient to approximate the inverse Hessian.
@@ -474,7 +554,7 @@ class Minimise2D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < 1e-7 and rel_diff_y < 1e-7:
+                if rel_diff_x < threshold and rel_diff_y < threshold:
                     # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.00001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
@@ -508,8 +588,7 @@ class Minimise2D():
             self._iterations += 1  # Incrementing iteration counter by 1
 
         return self._min  # Returning the coordinate vector that corresponds to the minimum function value  
-
-
+        
     """
     Getters to access the private member variables outside the class.
     Necessary to display the number of iterations, and the minimum NLL value in the console.

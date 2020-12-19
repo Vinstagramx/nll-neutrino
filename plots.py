@@ -245,17 +245,20 @@ def contour(X, Y, Z, filename, colorbar = True, fill = False, title = None, xlab
     if len(X) != len(Y) != len(Z):
         raise LengthError()
 
-    plot_settings(clear = True, grid = False)  # Defining plot settings
+    plot_settings(clear = False, grid = False)  # Defining plot settings
     if fill:
         plt.contourf(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with filled contours)
     else:
-        plt.contour(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with contour lines)
+        cs = plt.contour(X, Y, Z, **cont_kwargs)  # Creating a contour plot (with contour lines)
+        plt.clabel(cs, fmt='%1.1f')
     # Setting plot parameters
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+    plt.legend()
     if colorbar:
         plt.colorbar()
+    plt.show()
     plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
 
 def spare():

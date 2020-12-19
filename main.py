@@ -10,6 +10,7 @@ from minim_3d import Minimise3D  # 3-D minimisation module
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+import time
 
 # # Defining colour list (to use in plots)
 colour_list = list(mcolors.TABLEAU_COLORS.values())  # Using the Tableau colours from matplotlib.colors
@@ -157,28 +158,26 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise1D o
 # # Investigating the left local minimum:
 # # Creating a Minimise1D object for parabolic minimisation
 # min_obj = Minimise1D(init_range = [0.55, 0.78], nll = True, nll_param = 'theta', nll_data = data)  # The first range of [0.55,0.78] was chosen by inspection of the previous plot
+# start = time.time()
 # min_theta = min_obj.para_min()
+# end = time.time()
 # print("--- Left Minimum ---")
 # print(f"Mixing Angle which minimises NLL: {min_theta}")
 # print(f"NLL value: {min_obj.min_func}")
 # print(f"Iterations: {min_obj.iterations}")
+# print(f"Execution Time: {end-start}s")
 
 # # Investigating the right local minimum:
 # # Creating a Minimise1D object for parabolic minimisation
 # min_obj2 = Minimise1D(init_range = [0.795, 1.02], nll = True, nll_param = 'theta', nll_data = data)  # The second range of [0.795,1.02] was chosen by inspection of the previous plot
+# start = time.time()
 # min_theta2 = min_obj2.para_min()
+# end = time.time()
 # print("--- Right Minimum ---")
 # print(f"Mixing Angle which minimises NLL: {min_theta2}")
 # print(f"NLL value: {min_obj2.min_func}")
 # print(f"Iterations: {min_obj2.iterations}")
-
-# # What if range includes both local minima? --> don't need
-# min_obj3 = Minimise1D(init_range = [0.2, 1.2], nll = True, nll_param = 'theta', nll_data = data)
-# min_theta3 = min_obj3.para_min()
-# print("--- Minimising over both local minima ---")
-# print(f"Mixing Angle which minimises NLL: {min_theta3}")
-# print(f"NLL value: {min_obj3.min_func}")
-# print(f"Iterations: {min_obj3.iterations}")
+# print(f"Execution Time: {end-start}s")
 
 # # Testing the minimisation on an arbitrary function:
 # def parabola(x):
@@ -268,17 +267,22 @@ Section 4.1 - Univariate 2-D Minimisation
 """
 data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
 # # Creating a Minimise2D object for univariate minimisation (also used later)
-# min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, start_coord = [0.57, 1.5e-3])
-# # Minimising the mixing angle (x-direction) first
-# min_2d.univ_min(first = 'x')
-# print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.dir_min_func}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
-# print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
-# univ_mins = min_2d.mins_list
+min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, start_coord = [0.6, 2e-3])
+
+# Minimising the mixing angle (x-direction) first
+start = time.time()
+min_2d.univ_min(first = 'x')
+end = time.time()
+print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
+print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+print(f"Execution Time: {end-start}s")
+univ_mins = min_2d.mins_list
+univ_mins = np.vstack(univ_mins)
 
 # # Minimising the squared mass difference (y-direction) first
 # min_2d.univ_min(first = 'y')
@@ -293,18 +297,21 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D o
 """
 Section 4.2 - Testing Simultaneous Minimisation Schemes
 """
-# # Gradient scheme - Note this takes a long time to run (~3k iterations)
-# min_2d.grad_min(alpha = 2e-7)
-# print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.nll_min}")
-# print(f"Total iterations: {min_2d.iterations}")
-# grad_mins = min_2d.mins_list
-# grad_mins = np.vstack(grad_mins)
+# Gradient scheme - Note this takes a long time to run (~3k iterations)
+start = time.time()
+min_2d.grad_min(alpha = 2e-7)
+end = time.time()
+print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"Execution Time: {end-start}s")
+grad_mins = min_2d.mins_list
+grad_mins = np.vstack(grad_mins)
 
 # # Newton scheme
-# min_2d.newton_min(alpha = 2e-7)
+# min_2d.newton_min(alpha = 1e-2)
 # print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
@@ -314,16 +321,41 @@ Section 4.2 - Testing Simultaneous Minimisation Schemes
 # newt_mins = np.vstack(newt_mins)
 # print(newt_mins[:,0])
 
-# # Quasi-Newton scheme - Note this also takes a long time to run (~3k iterations)
-# min_2d.quasi_newton_min(alpha = 2e-7)
-# print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.nll_min}")
-# print(f"Total iterations: {min_2d.iterations}")
-# quas_mins = min_2d.mins_list
-# quas_mins = np.vstack(quas_mins)
-# print(quas_mins[:,0])
+# Quasi-Newton scheme - Note this also takes a long time to run (~3.7k iterations)
+start = time.time()
+min_2d.quasi_newton_min(alpha = 2e-7)
+end = time.time()
+print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"Execution Time: {end-start}s")
+quas_mins = min_2d.mins_list
+quas_mins = np.vstack(quas_mins)
+
+# Creating contour plot of 2-D minimisation paths
+plt.clf()
+plt.scatter([0.672], [2.58e-3], marker = 'x', s = 10, label = "Initial Point")
+plt.plot(quas_mins[:,0], quas_mins[:,1], linestyle = 'dashed', color = "#f00000", label = "Quasi-Newton")
+plt.plot(univ_mins[:,0], univ_mins[:,1], linestyle = 'dashed', color = "#0050d1", label = "Univariate")
+plt.plot(grad_mins[:,0], grad_mins[:,1], linestyle = 'dashed', color = "#b000e6", label = "Gradient")
+
+x_theta = np.linspace(0.3, 1.2, 50)  # Array of mixing angles
+y_mass = np.linspace(5e-4, 5e-3, 50)  # Array of squared mass differences
+X, Y = np.meshgrid(x_theta, y_mass)  # Forms two 'grids' of X and Y data
+z_nll = np.empty((50,50))  # Empty 2-D array initialised for the NLL values
+# Calculating 50 x 50 NLL values for the contour plot
+for i in range(0, len(x_theta)):
+  for j in range(0, len(y_mass)):
+    nll_contour = NLL(en_array, event_no, exp_data, mix_ang = X[i][j], distance = L, sq_mass_diff = Y[i][j])
+    nll_contour.surv_prob()
+    nll_contour.calc_lambda()
+    z_nll[i][j] = nll_contour.find_nll()  # Calculating the NLL
+# Contour line plot
+plots.contour(X, Y, z_nll, filename = "contour", colorbar = False, fill = False, \
+              title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
+
 
 # """
 # Section 5 - Preliminary Investigations
@@ -371,44 +403,53 @@ Section 5 - Testing 3-D Minimisation Schemes
 - Note: x refers to the mixing angle, y refers to the squared mass difference, and z refers to the cross-section proportionality constant.
 - From inspection (nll_cross_secs.pdf), the z-initialisation range was chosen to be [0.5,2].
 """
-data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
-# Creating a Minimise3D object for univariate minimisation (also used later)
-# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
-min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
-# Minimising the cross-section scaling (z-direction) first
-min_3d.univ_min(first = 'z')
-print("--- 3-D Univariate Minimisation (Cross-Section Proportionality first) ---")
-print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
-print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
-print(f"NLL value: {min_3d.dir_min_func}")
-print(f"Total iterations: {min_3d.iterations}")
-print(f"x-direction --> Iterations: {min_3d.x_iters}, Minimisations: {min_3d.min_iters_x}")
-print(f"y-direction --> Iterations: {min_3d.y_iters}, Minimisations: {min_3d.min_iters_y}")
-print(f"z-direction --> Iterations: {min_3d.z_iters}, Minimisations: {min_3d.min_iters_z}")
-univ_mins = min_3d.mins_list
-print(min_3d.start)
-print(univ_mins[0])
+# data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
+# # Creating a Minimise3D object for univariate minimisation (also used later)
+# # min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
+# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
+# # Minimising the cross-section scaling (z-direction) first
+# start = time.time()
+# min_3d.univ_min(first = 'z')
+# end = time.time()
+# print("--- 3-D Univariate Minimisation (Cross-Section Proportionality first) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.dir_min_func}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# print(f"x-direction --> Iterations: {min_3d.x_iters}, Minimisations: {min_3d.min_iters_x}")
+# print(f"y-direction --> Iterations: {min_3d.y_iters}, Minimisations: {min_3d.min_iters_y}")
+# print(f"z-direction --> Iterations: {min_3d.z_iters}, Minimisations: {min_3d.min_iters_z}")
+# univ_mins = min_3d.mins_list
+# print(min_3d.start)
+# print(univ_mins[0])
 
-# Gradient scheme - Note this takes a long time to run (~3k iterations)
+# # Gradient scheme - Note this takes a long time to run (~3k iterations)
+# start = time.time()
 # min_3d.grad_min(alpha = 1e-6)
+# end = time.time()
 # print("--- 3-D Simultaneous Minimisation (Gradient Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
 # print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
 # print(f"NLL value: {min_3d.nll_min}")
 # print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
 # grad_mins = min_3d.mins_list
 # grad_mins = np.vstack(grad_mins)
 
 # # Quasi-Newton scheme - Note this takes a long time to run (~1k iterations)
+# start = time.time()
 # min_3d.quasi_newton_min(alpha = 1e-6)
+# end = time.time()
 # print("--- 3-D Simultaneous Minimisation (Quasi-Newton Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
 # print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
 # print(f"NLL value: {min_3d.nll_min}")
 # print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
 # quas_mins = min_3d.mins_list
 # quas_mins = np.vstack(quas_mins)
 # print(quas_mins[:,0])
