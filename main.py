@@ -265,9 +265,9 @@ Section 3.4 - Parabolic Minimisation
 # Section 4.1 - Univariate 2-D Minimisation
 # - Note: x refers to the mixing angle, and y refers to the squared mass difference.
 # """
-# data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
-# # # # Creating a Minimise2D object for univariate minimisation (also used later)
-# min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, start_coord = [0.6, 2e-3])
+data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
+# Creating a Minimise2D object for univariate minimisation (also used later)
+min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, start_coord = [0.6, 2e-3])
 
 # # Minimising the mixing angle (x-direction) first
 # start = time.time()
@@ -321,12 +321,15 @@ Section 3.4 - Parabolic Minimisation
 # grad_mins = np.vstack(grad_mins)
 
 # # Newton scheme
+# start = time.time()
 # min_2d.newton_min(alpha = 0.1)
+# end = time.time()
 # print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
 # print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
 # print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
 # print(f"NLL value: {min_2d.nll_min}")
 # print(f"Total iterations: {min_2d.iterations}")
+# print(f"Execution Time: {end-start}s")
 # Calculating error in minimising parameters
 # std_arr1 = min_2d.std_change()
 # std_arr2 = min_2d.std_gauss()
@@ -335,6 +338,23 @@ Section 3.4 - Parabolic Minimisation
 # newt_mins = min_2d.mins_list
 # newt_mins = np.vstack(newt_mins)
 
+# LMA (Damped Least-Squares) scheme
+start = time.time()
+min_2d.LMA_min(alpha = 1e-5)
+end = time.time()
+print("--- 2-D Simultaneous Minimisation (LMA Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"Execution Time: {end-start}s")
+# Calculating error in minimising parameters
+std_arr1 = min_2d.std_change()
+std_arr2 = min_2d.std_gauss()
+print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+LMA_mins = min_2d.mins_list
+LMA_mins = np.vstack(LMA_mins)
 
 # # Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
 # start = time.time()
@@ -424,88 +444,88 @@ Section 5 - Testing 3-D Minimisation Schemes
 - Note: x refers to the mixing angle, y refers to the squared mass difference, and z refers to the cross-section proportionality constant.
 - From inspection (nll_cross_secs.pdf), the z-initialisation range was chosen to be [0.5,2].
 """
-data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
-# Creating a Minimise3D object for univariate minimisation (also used later)
-# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
-min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
-# Minimising the cross-section scaling (z-direction) first
-start = time.time()
-min_3d.univ_min(first = 'z')
-end = time.time()
-print("--- 3-D Univariate Minimisation (Cross-Section Proportionality first) ---")
-print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
-print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
-print(f"NLL value: {min_3d.dir_min_func}")
-print(f"Total iterations: {min_3d.iterations}")
-print(f"Execution Time: {end-start}s")
-print(f"x-direction --> Iterations: {min_3d.x_iters}, Minimisations: {min_3d.min_iters_x}")
-print(f"y-direction --> Iterations: {min_3d.y_iters}, Minimisations: {min_3d.min_iters_y}")
-print(f"z-direction --> Iterations: {min_3d.z_iters}, Minimisations: {min_3d.min_iters_z}")
-# Calculating error in minimising parameters
-std_arr1 = min_3d.std_change()
-std_arr2 = min_3d.std_gauss()
-print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
-print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
-print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-univ_mins = min_3d.mins_list
+# data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
+# # Creating a Minimise3D object for univariate minimisation (also used later)
+# # min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
+# min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data, start_coord = [0.665, 2.5e-3, 1.25])
+# # Minimising the cross-section scaling (z-direction) first
+# start = time.time()
+# min_3d.univ_min(first = 'z')
+# end = time.time()
+# print("--- 3-D Univariate Minimisation (Cross-Section Proportionality first) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.dir_min_func}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# print(f"x-direction --> Iterations: {min_3d.x_iters}, Minimisations: {min_3d.min_iters_x}")
+# print(f"y-direction --> Iterations: {min_3d.y_iters}, Minimisations: {min_3d.min_iters_y}")
+# print(f"z-direction --> Iterations: {min_3d.z_iters}, Minimisations: {min_3d.min_iters_z}")
+# # Calculating error in minimising parameters
+# std_arr1 = min_3d.std_change()
+# std_arr2 = min_3d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
+# univ_mins = min_3d.mins_list
 
-# Gradient scheme - Note this takes a long time to run (~2.5k iterations)
-start = time.time()
-min_3d.grad_min(alpha = 1.1e-6)
-end = time.time()
-print("--- 3-D Simultaneous Minimisation (Gradient Method) ---")
-print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
-print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
-print(f"NLL value: {min_3d.nll_min}")
-print(f"Total iterations: {min_3d.iterations}")
-print(f"Execution Time: {end-start}s")
-# Calculating error in minimising parameters
-std_arr1 = min_3d.std_change()
-std_arr2 = min_3d.std_gauss()
-print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
-print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
-print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-grad_mins = min_3d.mins_list
-grad_mins = np.vstack(grad_mins)
+# # Gradient scheme - Note this takes a long time to run (~2.5k iterations)
+# start = time.time()
+# min_3d.grad_min(alpha = 1.1e-6)
+# end = time.time()
+# print("--- 3-D Simultaneous Minimisation (Gradient Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.nll_min}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# # Calculating error in minimising parameters
+# std_arr1 = min_3d.std_change()
+# std_arr2 = min_3d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
+# grad_mins = min_3d.mins_list
+# grad_mins = np.vstack(grad_mins)
 
-# Newton scheme - Note: Error calculation is quite slow due to inaccuracies (explained in report)
-start = time.time()
-min_3d.newton_min(alpha = 0.1)
-end = time.time()
-print("--- 3-D Simultaneous Minimisation (Newton Method) ---")
-print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
-print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
-print(f"NLL value: {min_3d.nll_min}")
-print(f"Total iterations: {min_3d.iterations}")
-print(f"Execution Time: {end-start}s")
-# Calculating error in minimising parameters
-std_arr1 = min_3d.std_change()
-std_arr2 = min_3d.std_gauss()
-print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
-print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
-print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-newt_mins = min_3d.mins_list
-newt_mins = np.vstack(newt_mins)
+# # Newton scheme - Note: Error calculation is quite slow due to inaccuracies (explained in report)
+# start = time.time()
+# min_3d.newton_min(alpha = 0.1)
+# end = time.time()
+# print("--- 3-D Simultaneous Minimisation (Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.nll_min}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# # Calculating error in minimising parameters
+# std_arr1 = min_3d.std_change()
+# std_arr2 = min_3d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
+# newt_mins = min_3d.mins_list
+# newt_mins = np.vstack(newt_mins)
 
-# Quasi-Newton scheme - Note this takes some time to run (~1k iterations)
-start = time.time()
-min_3d.quasi_newton_min(alpha = 1e-6)
-end = time.time()
-print("--- 3-D Simultaneous Minimisation (Quasi-Newton Method) ---")
-print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
-print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
-print(f"NLL value: {min_3d.nll_min}")
-print(f"Total iterations: {min_3d.iterations}")
-print(f"Execution Time: {end-start}s")
-# Calculating error in minimising parameters
-std_arr1 = min_3d.std_change()
-std_arr2 = min_3d.std_gauss()
-print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
-print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
-print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-quas_mins = min_3d.mins_list
-quas_mins = np.vstack(quas_mins)
+# # Quasi-Newton scheme - Note this takes some time to run (~1k iterations)
+# start = time.time()
+# min_3d.quasi_newton_min(alpha = 1e-6)
+# end = time.time()
+# print("--- 3-D Simultaneous Minimisation (Quasi-Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.nll_min}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# # Calculating error in minimising parameters
+# std_arr1 = min_3d.std_change()
+# std_arr2 = min_3d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
+# quas_mins = min_3d.mins_list
+# quas_mins = np.vstack(quas_mins)

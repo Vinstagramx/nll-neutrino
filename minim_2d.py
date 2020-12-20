@@ -389,7 +389,7 @@ class Minimise2D():
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
-            alpha: Size of step used in central-difference scheme.
+            alpha: Size of step taken between each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
@@ -447,7 +447,7 @@ class Minimise2D():
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
-            alpha: Size of step used in central-difference scheme.
+            alpha: Size of step taken between each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
@@ -517,79 +517,90 @@ class Minimise2D():
 
         return self._min  # Returning the coordinate vector that corresponds to the minimum function value  
 
-    def quasi_LMA_min(self, alpha):
-        """Quasi-Newton simultaneous minimisation method for 2 dimensions.
-
-        A less computationally intensive approximation of the Newton method, which uses the local gradient to approximate the inverse Hessian.
-        However, the step size used, α, was scaled so that it has an equivalent relative magnitude in both coordinate directions, for optimal efficiency. 
-        The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
+    def LMA_min(self, alpha):
+        """Levenberg–Marquardt Algorithm/Damped Least-squares simultaneous minimisation method for 2 dimensions.
 
         Args:
-            alpha: Size of step used in central-difference scheme.
+            alpha: Size of step taken between each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
-        # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
-        # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
-        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
-        alpha_x = alpha
-        alpha_y = alpha_x / scaling 
-        alpha_vec = np.array([alpha_x, alpha_y])  # Alpha is expressed as a vector
-        G = np.identity(2)  # G (inverse Hessian approximation) is equal to the identity matrix for the first iteration.
-        self._grad = np.empty(2)  # Initialising the gradient vector
+        threshold = 1e-6  # Convergence condition threshold
+        h = 1e-6  # Step size for finite differencing (in this case the central-difference scheme)
+        prev_errors = np.empty(2)
+        prev_grad = np.empty(2)
+        alpha = alpha
+        prev_hess = np.empty((2,2))
         while not self._minimum_found:
-            
-            if self._iterations == 0:
-                # Need to compute the gradient vector for the first iteration (grad is updated during the calculations of updating G for later iterations)
-                # --> Central difference scheme used to compute gradient vector
-                self._grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
-                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
+            # Finding the gradient vector using central-differencing scheme
+            grad = np.empty(2)
+            grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+            hessian = np.empty((2,2))  # Initialising the Hessian matrix
+            # Calculating the second derivatives needed for the elements of the Hessian using forward-differencing scheme
+            hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1])) + \
+                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - \
+                           self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+            hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
+                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+            hessian[1,0] = hessian[0,1]
+            # new_errors = np.reciprocal(np.diagonal(hessian))  # Error (variance) can be given by the inverse of the Hessian diagonal elements.
+            # print(new_errors)
+            # print(alpha)
+            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian + alpha * np.diag(np.diag(hessian))), grad)
+            step = new_coord - self._prev_coord
 
-            new_coord = self._prev_coord - (alpha_vec * np.matmul(G, self._grad))  # Calculating the new coordinate for this step
-            self._mins_list.append(new_coord)  # Appending new coordinate to list
-            if self._iterations == 0:  # No need to check for convergence if first iteration
+            numerator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - self.calc_nll(new_coord[0], new_coord[1])
+            taylor_est = self.calc_nll(new_coord[0], new_coord[1]) + np.dot(grad, step) + \
+                         0.5 * np.dot(step,np.matmul(hessian, step))
+            # error = self.calc_nll(new_coord[0], new_coord[1]) - taylor_est
+            # print(taylor_est)
+            denominator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - taylor_est
+            # print(denominator)
+            fit_goodness = numerator/denominator
+            # print(fit_goodness)
+            if self._iterations == 0: 
+                # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
+                # prev_errors = new_errors
+                prev_grad = grad
+                prev_hess = hessian
             else:
-                # Calculation of relative difference in each direction between successive minima
-                rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
-                rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < threshold and rel_diff_y < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.00001% of previous minimum),
-                    # then triggers the 'minimum_found' flag and exits the loop after this iteration
-                    self._minimum_found = True
-                    self._min = new_coord  # Saving minimum
-                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                # # If error has increased as a result of the update, step is rejected
+                # if False in np.greater_equal(prev_errors, new_errors):
+                #     alpha *= 10  # Increase step size by a factor of 10
+                # # If error has decreased as a result of the update, step is accepted
+                # else:
+                #     alpha /= 10  # Decrease step size by a factor of 10
+                if fit_goodness < 0:
+                    alpha *= 2
                 else:
-                    # If the initial convergence condition is not fulfilled
-                    delta_n = new_coord - self._prev_coord  # Calculating the vector δ_n
-                    new_grad = np.empty(2)
-                    new_grad[0] = (self.calc_nll(new_coord[0] + alpha_x, new_coord[1]) - self.calc_nll(new_coord[0] - alpha_x, new_coord[1])) / (2 * alpha_x)
-                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + alpha_y) - self.calc_nll(new_coord[0], new_coord[1] - alpha_y)) / (2 * alpha_y)
-                    gamma_n = new_grad - self._grad  # Calculating the vector γ_n
-                    gd_prod = np.dot(gamma_n, delta_n)  # Vector dot product of (γ_n, δ_n)
-                    # Alternative convergence condition - if gamma_n * delta_n is equal to zero
-                    # This also means that the step size is sufficiently small (G also cannot be updated due to division by zero)
-                    if gd_prod == 0:
+                    alpha /= 2
+                # # print(fit_goodness, nll_diff)
+                # if nll_diff > 0:                
+                    # Calculation of relative difference in each direction between successive minima
+                    rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
+                    rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
+                    if rel_diff_x < threshold and rel_diff_y < threshold:
+                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                        # then triggers the 'minimum_found' flag and exits the loop after this iteration
                         self._minimum_found = True
-                        self._min = new_coord
-                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                        self._min = new_coord  # Saving minimum
+                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
                     else:
-                        # If there is no convergence, the vector G, ∇f, and the current coordinate are updated before the next iteration.
-                        # Updating the inverse Hessian approximation matrix G using the DFP (Davidon-Fletcher-Powell) algorithm
-                        outer_prod_d = np.outer(delta_n, delta_n)  # Outer product
-                        next_G = G + (outer_prod_d/(gd_prod)) - \
-                                  (np.matmul(G, (np.matmul(outer_prod_d, G))) / np.matmul(gamma_n, np.matmul(G, gamma_n)))
-                        G = next_G
-                        # Updating parameters for next iteration
                         self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
-                        self._grad = new_grad  # New gradient vector
-                
+                        print(new_coord)
+                        # prev_errors = new_errors
+                        prev_grad = grad
+                        prev_hess = hessian
+                    self._mins_list.append(new_coord)  # Appending new coordinate to list
             self._iterations += 1  # Incrementing iteration counter by 1
 
-        return self._min  # Returning the coordinate vector that corresponds to the minimum function value  
+        return self._min  # Returning the coordinate vector that corresponds to the minimum function value
 
     def std_change(self, return_all = False):
         """Calculates the standard deviation of the minimising parameters using the change in the parabola.
@@ -677,7 +688,7 @@ class Minimise2D():
                 second_derivative =  (self.calc_nll(self._min[0], self._min[1] + 2 * h) - (2 * self.calc_nll(self._min[0], self._min[1] + h)) + \
                             self.calc_nll(self._min[0], self._min[1])) / (h**2)
 
-            std = 1/second_derivative
+            std = 1/np.sqrt(second_derivative)
             self._std_gauss.append(std)
         
         return self._std_gauss

@@ -470,7 +470,7 @@ class Minimise3D():
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
-            alpha: Size of step used in central-difference scheme.
+            alpha: Size of step taken between each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
@@ -541,7 +541,7 @@ class Minimise3D():
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
-            alpha: Size of step used in central-difference scheme.
+            alpha: Size of step taken between each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
@@ -710,7 +710,7 @@ class Minimise3D():
                 second_derivative =  (self.calc_nll(self._min[0], self._min[1], self._min[2] + 2 * h) - (2 * self.calc_nll(self._min[0], self._min[1], self._min[2] + h)) + \
                             self.calc_nll(self._min[0], self._min[1], self._min[2])) / (h**2)
 
-            std = 1/second_derivative
+            std = 1/np.sqrt(second_derivative)
             self._std_gauss.append(std)
         
         return self._std_gauss
