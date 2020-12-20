@@ -288,77 +288,90 @@ print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr
 univ_mins = min_2d.mins_list
 univ_mins = np.vstack(univ_mins)
 
-# # Minimising the squared mass difference (y-direction) first
-# min_2d.univ_min(first = 'y')
-# print("--- 2-D Univariate Minimisation (Squared Mass Diff first)---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.dir_min_func}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
-# print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+# Minimising the squared mass difference (y-direction) first
+min_2d.univ_min(first = 'y')
+print("--- 2-D Univariate Minimisation (Squared Mass Diff first)---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
+print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
 
-# """
-# Section 4.2 - Testing Simultaneous Minimisation Schemes
-# """
-# # Gradient scheme - Note this takes some time to run (~1.5k iterations)
-# start = time.time()
-# min_2d.grad_min(alpha = 5e-7)
-# end = time.time()
-# print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.nll_min}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"Execution Time: {end-start}s")
-# grad_mins = min_2d.mins_list
-# grad_mins = np.vstack(grad_mins)
+"""
+Section 4.2 - Testing Simultaneous Minimisation Schemes
+"""
+# Gradient scheme - Note this takes some time to run (~1.5k iterations)
+start = time.time()
+min_2d.grad_min(alpha = 5e-7)
+end = time.time()
+print("--- 2-D Simultaneous Minimisation (Gradient Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"Execution Time: {end-start}s")
+std_arr1 = min_2d.std_change()
+std_arr2 = min_2d.std_gauss()
+print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+grad_mins = min_2d.mins_list
+grad_mins = np.vstack(grad_mins)
 
-# # Newton scheme
-# min_2d.newton_min(alpha = 0.1)
-# print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.nll_min}")
-# print(f"Total iterations: {min_2d.iterations}")
-# newt_mins = min_2d.mins_list
-# newt_mins = np.vstack(newt_mins)
+# Newton scheme
+min_2d.newton_min(alpha = 0.1)
+print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+std_arr1 = min_2d.std_change()
+std_arr2 = min_2d.std_gauss()
+print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+newt_mins = min_2d.mins_list
+newt_mins = np.vstack(newt_mins)
 
 
-# # Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
-# start = time.time()
-# min_2d.quasi_newton_min(alpha = 5e-7)
-# end = time.time()
-# print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.nll_min}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"Execution Time: {end-start}s")
-# quas_mins = min_2d.mins_list
-# quas_mins = np.vstack(quas_mins)
+# Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
+start = time.time()
+min_2d.quasi_newton_min(alpha = 5e-7)
+end = time.time()
+print("--- 2-D Simultaneous Minimisation (Quasi-Newton Method) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.nll_min}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"Execution Time: {end-start}s")
+std_arr1 = min_2d.std_change()
+std_arr2 = min_2d.std_gauss()
+print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+quas_mins = min_2d.mins_list
+quas_mins = np.vstack(quas_mins)
 
-# # Creating contour plot of 2-D minimisation paths
-# plt.clf()
-# plt.scatter([0.672], [2.58e-3], marker = 'x', s = 10, label = "Initial Point")
-# plt.plot(quas_mins[:,0], quas_mins[:,1], linestyle = 'dashed', color = "#f00000", label = "Quasi-Newton")
-# plt.plot(univ_mins[:,0], univ_mins[:,1], linestyle = 'dashed', color = "#0050d1", label = "Univariate")
-# plt.plot(grad_mins[:,0], grad_mins[:,1], linestyle = 'dashed', color = "#b000e6", label = "Gradient")
+# Creating contour plot of 2-D minimisation paths
+plt.clf()
+plt.scatter([0.6], [2.e-3], marker = 'x', s = 30, label = "Initial Point")
+plt.plot(quas_mins[:,0], quas_mins[:,1], linestyle = 'dashed', color = "#f00000", label = "Quasi-Newton")
+plt.plot(univ_mins[:,0], univ_mins[:,1], linestyle = 'dashed', color = "#0050d1", label = "Univariate")
+plt.plot(grad_mins[:,0], grad_mins[:,1], linestyle = 'dashed', color = "#b000e6", label = "Gradient")
+plt.plot(newt_mins[:,0], newt_mins[:,1], linestyle = 'dashed', color = "#9c3e00", label = "Newton")
 
-# x_theta = np.linspace(0.3, 1.2, 50)  # Array of mixing angles
-# y_mass = np.linspace(5e-4, 5e-3, 50)  # Array of squared mass differences
-# X, Y = np.meshgrid(x_theta, y_mass)  # Forms two 'grids' of X and Y data
-# z_nll = np.empty((50,50))  # Empty 2-D array initialised for the NLL values
-# # Calculating 50 x 50 NLL values for the contour plot
-# for i in range(0, len(x_theta)):
-#   for j in range(0, len(y_mass)):
-#     nll_contour = NLL(en_array, event_no, exp_data, mix_ang = X[i][j], distance = L, sq_mass_diff = Y[i][j])
-#     nll_contour.surv_prob()
-#     nll_contour.calc_lambda()
-#     z_nll[i][j] = nll_contour.find_nll()  # Calculating the NLL
-# # Contour line plot
-# plots.contour(X, Y, z_nll, filename = "contour", colorbar = False, fill = False, \
-#               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
+x_theta = np.linspace(0.3, 1.2, 50)  # Array of mixing angles
+y_mass = np.linspace(5e-4, 5e-3, 50)  # Array of squared mass differences
+X, Y = np.meshgrid(x_theta, y_mass)  # Forms two 'grids' of X and Y data
+z_nll = np.empty((50,50))  # Empty 2-D array initialised for the NLL values
+# Calculating 50 x 50 NLL values for the contour plot
+for i in range(0, len(x_theta)):
+  for j in range(0, len(y_mass)):
+    nll_contour = NLL(en_array, event_no, exp_data, mix_ang = X[i][j], distance = L, sq_mass_diff = Y[i][j])
+    nll_contour.surv_prob()
+    nll_contour.calc_lambda()
+    z_nll[i][j] = nll_contour.find_nll()  # Calculating the NLL
+# Contour line plot
+plots.contour(X, Y, z_nll, filename = "contour", colorbar = False, fill = False, \
+              title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
 
 
 # """

@@ -665,23 +665,18 @@ class Minimise2D():
         # Checking that minimisation has been carried out
         if not self._minimum_found:
             raise MinimisationError()
-        
+
         self._std_gauss = []  # Initialising list of standard deviations for both directions
-        steps = [1e-6, 1e-8]  # Steps for central-difference scheme
-        for i, step in enumerate(steps):
-            # Calculating the second derivative of the NLL at the minimum for each direction
+        h = 1e-6  # Steps for central-difference scheme
+        for i in range(2):
+            # Calculating the second derivative of the NLL at the minimum for each direction, using forward-difference scheme
             if i == 0:
-                second_derivative = ((-1 * self.calc_nll(self._min[i] + 2*step, self._min[1])) + (16 * self.calc_nll(self._min[i] + step, self._min[1]))) - \
-                                    (30 * self.calc_nll(self._min[i], self._min[1])) + (16 * self.calc_nll(self._min[i] - step, self._min[1])) - \
-                                        self.calc_nll(self._min[i] - 2 * step, self._min[1]) / 12 * (step ** 2)
-                # second_derivative = (self.calc_nll(self._min[0] + 2 * h, self._min[1]) - (2 * self.calc_nll(self._min[0] + h, self._min[1])) + \
-                #            self.calc_nll(self._min[0], self._min[1])) / (h**2)
-            if i == 1:
-                second_derivative = ((-1 * self.calc_nll(self._min[0], self._min[i] + 2*step)) + (16 * self.calc_nll(self._min[0], self._min[i] + step))) - \
-                                    (30 * self.calc_nll(self._min[0], self._min[i])) + (16 * self.calc_nll(self._min[0], self._min[i] - step)) - \
-                                        self.calc_nll(self._min[0], self._min[i] - 2*step) / 12 * (step ** 2)
-                # second_derivatve =  (self.calc_nll(self._min[0], self._min[1] + 2 * h) - (2 * self.calc_nll(self._min[0], self._min[1] + h)) + \
-                #             self.calc_nll(self._min[0], self._min[1])) / (h**2)
+                second_derivative = (self.calc_nll(self._min[0] + 2 * h, self._min[1]) - (2 * self.calc_nll(self._min[0] + h, self._min[1])) + \
+                           self.calc_nll(self._min[0], self._min[1])) / (h**2)
+            else:
+                second_derivative =  (self.calc_nll(self._min[0], self._min[1] + 2 * h) - (2 * self.calc_nll(self._min[0], self._min[1] + h)) + \
+                            self.calc_nll(self._min[0], self._min[1])) / (h**2)
+
             std = 1/second_derivative
             self._std_gauss.append(std)
         
