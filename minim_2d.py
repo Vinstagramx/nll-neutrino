@@ -8,7 +8,7 @@ class MinimisationError(Exception):
     Attributes:
         message: Explanation of the error.
     """
-    def __init__(self, message = "Parabolic minimisation must have occurred before calculating the standard deviation!"):
+    def __init__(self, message = "Minimisation must have occurred before calculating the standard deviation!"):
         self.message = message
         print(self.message)  # Prints error message in console.
 

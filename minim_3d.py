@@ -1,8 +1,18 @@
 # Importing relevant packages
 import numpy as np
 from nll import NLL
-
+        
 np.random.seed(1234)  # Setting a random seed so that results can be compared across multiple runs
+
+class MinimisationError(Exception):
+    """Exception raised when the user attempts to calculate standard deviation without having minimised the function.
+
+    Attributes:
+        message: Explanation of the error.
+    """
+    def __init__(self, message = "Minimisation must have occurred before calculating the standard deviation!"):
+        self.message = message
+        print(self.message)  # Prints error message in console.
 
 class Minimise3D():
     """Class which carries out 3-D minimisation, using either univariate or simultaneous minimisation methods.
@@ -175,7 +185,7 @@ class Minimise3D():
                     self._xmin = np.mean(self._init_range_x)
                     self._ymin = np.mean(self._init_range_y)
 
-        # Calculating function values for initial parabolic minimisation (f(x,y))
+        # Calculating function values for initial parabolic minimisation (f(x,y.z))
         self._f = np.empty(3)
         if param == 'x':
             self._start = self._x
@@ -371,7 +381,7 @@ class Minimise3D():
                         prev_zmin = self._zmin  # If convergence condition not met, sets previous z-minimum variable equal to the found minimum
                 self._min_iters_z += 1
             # End of outer while-loop
-
+        self._nll_min = self.calc_nll(self._min[0], self._min[1], self._min[2])
         return self._min  # Returns coordinate containing minimising parameter
     
     def gen_start_pt(self):
@@ -430,7 +440,7 @@ class Minimise3D():
                     self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
             new_coord = self._prev_coord - (alpha_vec * d)  # Calculation of new coordinate vector
             self._mins_list.append(new_coord)  # Saving new coordinate vector
-            print(new_coord)
+
             if self._iterations == 0:
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
@@ -500,7 +510,7 @@ class Minimise3D():
             # Calculating the next coordinate step
             new_coord = self._prev_coord - (alpha * np.matmul(grad, np.linalg.inv(hessian)))
             self._mins_list.append(new_coord)  # Saving new coordinate vector
-            print(new_coord)
+
             if self._iterations == 0: 
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
@@ -571,7 +581,7 @@ class Minimise3D():
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 rel_diff_z = abs(self._prev_coord[2] - new_coord[2]) / self._prev_coord[2]
                 if rel_diff_x < threshold and rel_diff_y < threshold and rel_diff_z < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.00001% of previous minimum),
+                    # Convergence condition: If all relative differences are below the threshold (less than 0.00001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
@@ -609,6 +619,101 @@ class Minimise3D():
 
         return self._min  # Returning the coordinate vector that corresponds to the minimum function value  
 
+    def std_change(self, return_all = False):
+        """Calculates the standard deviation of the minimising parameters using the change in the parabola.
+        
+        Each of the parameters are shifted incrementally in both directions, until the NLL has increased by an absolute value of 0.5.
+        At this point, a shift of one standard deviation has occurred. To calculate the standard deviation, the shifts in both directions are averaged.
+        There is also an option to measurements other than the standard deviation (namely θ+ and θ-, and their corresponding NLL values).
+
+        Args:
+            return_all: Returns all stats (standard deviation, θ+ and θ-, and their corresponding NLL values) in a list.
+        
+        Returns:
+            self._std: Calculated standard deviation in each direction are returned in a list.
+        
+        Raises:
+            MinimisationError: If the standard deviation method is called without minimisation previously occurring.
+        """
+        # Checking that minimisation has been carried out
+        if not self._minimum_found:
+            raise MinimisationError()
+        
+        self._std = []
+        # Setting a limit for the NLL iterations - i.e. value of minimum NLL + 0.5 
+        nll_lim = self._nll_min + 0.5
+        steps_arr = [1e-5, 1e-7, 1e-5]  # List of increments used in the error calculation
+        for ind, val in enumerate(steps_arr):
+            self._var_plus = self._min[ind]
+            self._plus_found = False
+            while not self._plus_found:
+                if ind == 0:
+                    temp_nll_p = self.calc_nll(self._var_plus, self._min[1], self._min[2])  # Temporary calculated NLL value (in +ve direction)
+                elif ind == 1:
+                    temp_nll_p = self.calc_nll(self._min[0], self._var_plus, self._min[2])  # Temporary calculated NLL value (in +ve direction)
+                else:
+                    temp_nll_p = self.calc_nll(self._min[0], self._min[1], self._var_plus)  # Temporary calculated NLL value (in +ve direction)
+
+                if temp_nll_p >= nll_lim:
+                    self._plus_found = True  # If calculated NLL value is above the limit, triggers the flag
+                else:
+                    self._var_plus += val  # Increments theta_plus if NLL limit is not reached
+
+            self._var_minus = self._min[ind]
+            self._minus_found = False
+            while not self._minus_found:
+                if ind == 0:
+                    temp_nll_m = self.calc_nll(self._var_minus, self._min[1], self._min[2])  # Temporary calculated NLL value (in -ve direction)
+                elif ind == 1:
+                    temp_nll_m = self.calc_nll(self._min[0], self._var_minus, self._min[2])  # Temporary calculated NLL value (in -ve direction)
+                else:
+                    temp_nll_m = self.calc_nll(self._min[0], self._min[1], self._var_minus)  # Temporary calculated NLL value (in -ve direction)   
+
+                if temp_nll_m >= nll_lim:
+                    self._minus_found = True  # If calculated NLL value is above the limit, triggers the flag
+                else:
+                    self._var_minus -= val  # Increments theta_plus if NLL limit is not reached
+
+            # Finding the standard deviation by averaging the differences from the minimum
+            std = ((self._var_plus - self._min[ind]) + (self._min[ind] - self._var_minus)) / 2 
+            self._std.append(std)  # Variable consists of standard deviation only
+
+        return self._std  # Returns standard deviations in all directions
+
+    def std_gauss(self):
+        """Calculates the standard deviation by approximating the NLL as a Gaussian distribution around the minimum.
+
+        Finds the error in the (negative) log-likelihood for a single measurement, using the curvature (second derivative)
+        of the function about the minimum.
+
+        Returns:
+            self._std_gauss: Standard deviation calculated using the Gaussian approximation.
+
+        Raises:
+            MinimisationError: If the standard deviation method is called without minimisation previously occurring.
+        """
+        # Checking that minimisation has been carried out
+        if not self._minimum_found:
+            raise MinimisationError()
+
+        self._std_gauss = []  # Initialising list of standard deviations for all directions
+        h = 1e-6  # Steps for central-difference scheme
+        for i in range(3):
+            # Calculating the second derivative of the NLL at the minimum for each direction, using forward-difference scheme
+            if i == 0:
+                second_derivative = (self.calc_nll(self._min[0] + 2 * h, self._min[1], self._min[2]) - (2 * self.calc_nll(self._min[0] + h, self._min[1], self._min[2])) + \
+                           self.calc_nll(self._min[0], self._min[1], self._min[2])) / (h**2)
+            elif i == 1:
+                second_derivative =  (self.calc_nll(self._min[0], self._min[1] + 2 * h, self._min[2]) - (2 * self.calc_nll(self._min[0], self._min[1] + h, self._min[2])) + \
+                            self.calc_nll(self._min[0], self._min[1], self._min[2])) / (h**2)
+            else:
+                second_derivative =  (self.calc_nll(self._min[0], self._min[1], self._min[2] + 2 * h) - (2 * self.calc_nll(self._min[0], self._min[1], self._min[2] + h)) + \
+                            self.calc_nll(self._min[0], self._min[1], self._min[2])) / (h**2)
+
+            std = 1/second_derivative
+            self._std_gauss.append(std)
+        
+        return self._std_gauss
 
     """
     Getters to access the private member variables outside the class.

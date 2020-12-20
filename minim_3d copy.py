@@ -4,6 +4,11 @@ from nll import NLL
                     # self._z = [1.12827282, 1.12826929, 1.12827281]
                     # self._z = [1.125, 1.1251, 1.1252]
                     # self._z = [1.25, 1.2501, 1.2502]
+    def spare():
+    plt.show()
+    plt.pause(40)
+    print('ax.azim {}'.format(ax.azim))
+    print('ax.elev {}'.format(ax.elev))
 class Minimise3D():
     """Class which carries out 3-D minimisation, using either univariate or simultaneous minimisation methods.
 

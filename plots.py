@@ -261,9 +261,4 @@ def contour(X, Y, Z, filename, colorbar = True, fill = False, title = None, xlab
     plt.show()
     plt.savefig(f'{os.path.join(plot_path,filename)}.pdf', dpi = 200)  # Saving the plot in the 'plots' folder
 
-def spare():
-    plt.show()
-    plt.pause(40)
-    print('ax.azim {}'.format(ax.azim))
-    print('ax.elev {}'.format(ax.elev))
     
