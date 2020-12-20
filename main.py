@@ -269,20 +269,24 @@ data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D o
 # # # Creating a Minimise2D object for univariate minimisation (also used later)
 min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, start_coord = [0.6, 2e-3])
 
-# # Minimising the mixing angle (x-direction) first
-# start = time.time()
-# min_2d.univ_min(first = 'x')
-# end = time.time()
-# print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
-# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-# print(f"NLL value: {min_2d.dir_min_func}")
-# print(f"Total iterations: {min_2d.iterations}")
-# print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
-# print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
-# print(f"Execution Time: {end-start}s")
-# univ_mins = min_2d.mins_list
-# univ_mins = np.vstack(univ_mins)
+# Minimising the mixing angle (x-direction) first
+start = time.time()
+min_2d.univ_min(first = 'x')
+end = time.time()
+print("--- 2-D Univariate Minimisation (Mixing Angle first) ---")
+print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+print(f"NLL value: {min_2d.dir_min_func}")
+print(f"Total iterations: {min_2d.iterations}")
+print(f"x-direction --> Iterations: {min_2d.x_iters}, Minimisations: {min_2d.min_iters_x}")
+print(f"y-direction --> Iterations: {min_2d.y_iters}, Minimisations: {min_2d.min_iters_y}")
+print(f"Execution Time: {end-start}s")
+std_arr1 = min_2d.std_change()
+std_arr2 = min_2d.std_gauss()
+print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+univ_mins = min_2d.mins_list
+univ_mins = np.vstack(univ_mins)
 
 # # Minimising the squared mass difference (y-direction) first
 # min_2d.univ_min(first = 'y')
@@ -310,16 +314,16 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # grad_mins = min_2d.mins_list
 # grad_mins = np.vstack(grad_mins)
 
-# Newton scheme
-min_2d.newton_min(alpha = 0.25)
-print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
-print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-print(f"NLL value: {min_2d.nll_min}")
-print(f"Total iterations: {min_2d.iterations}")
-newt_mins = min_2d.mins_list
-newt_mins = np.vstack(newt_mins)
-print(newt_mins[:,0])
+# # Newton scheme
+# min_2d.newton_min(alpha = 0.1)
+# print("--- 2-D Simultaneous Minimisation (Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.nll_min}")
+# print(f"Total iterations: {min_2d.iterations}")
+# newt_mins = min_2d.mins_list
+# newt_mins = np.vstack(newt_mins)
+
 
 # # Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
 # start = time.time()
@@ -439,7 +443,21 @@ min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = 
 # grad_mins = min_3d.mins_list
 # grad_mins = np.vstack(grad_mins)
 
-# # Quasi-Newton scheme - Note this takes a long time to run (~1k iterations)
+# # Newton scheme
+# start = time.time()
+# min_3d.newton_min(alpha = 0.1)
+# end = time.time()
+# print("--- 3-D Simultaneous Minimisation (Newton Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.nll_min}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# newt_mins = min_3d.mins_list
+# newt_mins = np.vstack(newt_mins)
+
+# # Quasi-Newton scheme - Note this takes some time to run (~1k iterations)
 # start = time.time()
 # min_3d.quasi_newton_min(alpha = 1e-6)
 # end = time.time()
@@ -452,4 +470,3 @@ min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = 
 # print(f"Execution Time: {end-start}s")
 # quas_mins = min_3d.mins_list
 # quas_mins = np.vstack(quas_mins)
-# print(quas_mins[:,0])

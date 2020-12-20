@@ -27,7 +27,7 @@ class Minimise3D():
             start_coord: Starting coordinate (default set to None). If not specified, the starting point of the various schemes is chosen at random.
         
         Raises:
-            AttributeError: If the input range does not have 2 values (lower, upper), or if both NLL and another function are
+            AttributeError: If the input ranges do not have 2 values each (lower, upper), or if both NLL and another function are
                             simultaneously chosen for minimisation.
             ValueError: If the input range is not in the form (lower, upper).
             ParameterError: If the function to be minimised is the NLL, but no parameters are specified.
@@ -54,8 +54,7 @@ class Minimise3D():
     def calc_nll(self, theta, mass, cross_sec):
         """Calculates the Negative Log Likelihood using the NLL class from nll.py.
 
-        Creates an instance of the imported NLL class, in order to calculate the NLL value for a given mixing angle
-        or squared mass difference.
+        Creates an instance of the imported NLL class, in order to calculate the NLL value using the arguments given.
         
         Args:
             theta: Neutrino mixing angle.
@@ -231,7 +230,7 @@ class Minimise3D():
         threshold = 1e-6  # Convergence condition threshold
         if self._start_coord is not None:
             self._mins_list.append(self._start_coord)
-        # Initialising previous values of the minima in both directions (will be overwritten)
+        # Initialising previous values of the minima in all directions (will be overwritten)
         prev_xmin = 1
         prev_ymin = 1
         prev_zmin = 1
@@ -395,11 +394,11 @@ class Minimise3D():
         return coord 
 
     def grad_min(self, alpha):
-        """Gradient simultaneous minimisation method for 2 dimensions.
+        """Gradient simultaneous minimisation method for 3 dimensions.
 
         Follows the steepest descent in gradient towards the minimum. This is done by calculating the gradient using a forward
         difference scheme, and taking a small step α in the direction opposite the gradient (as the gradient is perpendicular to the local contour line).
-        However, α was scaled so that it has an equivalent relative magnitude in both coordinate directions, for optimal efficiency. 
+        However, α was scaled so that it has an equivalent relative magnitude in all coordinate directions, for optimal efficiency. 
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
@@ -441,7 +440,7 @@ class Minimise3D():
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 rel_diff_z = abs(self._prev_coord[2] - new_coord[2]) / self._prev_coord[2]
                 if rel_diff_x < threshold and rel_diff_y < threshold and rel_diff_z < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                    # Convergence condition: If relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
@@ -454,12 +453,10 @@ class Minimise3D():
         return self._min  # Returning the coordinate vector that corresponds to the minimum function value
 
     def newton_min(self, alpha):
-        """Newton simultaneous minimisation method for 2 dimensions.
+        """Newton simultaneous minimisation method for 3 dimensions.
 
-        Takes the local curvature into account at each step for minimisation, by calculating the Hessian and multiplying it by the 
+        Takes the local curvature into account at each step for minimisation, by calculating the inverse Hessian and multiplying it by the 
         gradient vector to find the descent vector for each iteration.
-        However, the step size used for the central-difference scheme, α, was scaled so that it has an equivalent relative magnitude
-        in both coordinate directions, for optimal efficiency. 
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:
@@ -470,31 +467,40 @@ class Minimise3D():
         self._prev_coord = self.gen_start_pt()  # Generating starting position
         self._mins_list = []  # Initialising list of minima (for plotting purposes)
         self._mins_list.append(self._prev_coord)
-        # As the mass is smaller in size than the mixing angle, we scale alpha to have the same relative size for both parameters.
-        # --> The scaling factor is found using the ratio between the means of the two initialisation ranges
-        scaling = np.mean(self._init_range_x) / np.mean(self._init_range_y)
-        alpha_x = alpha
-        alpha_y = alpha_x / scaling 
+        threshold = 5e-7  # Convergence condition threshold
+        h = 1e-6  # Step size for finite differencing (in this case the central-difference scheme)
+
         while not self._minimum_found:
-            # Finding the gradient vector using central differencing
-            grad = np.empty(2)
-            grad[0] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) / (2 * alpha_x)
-            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) / (2 * alpha_y)
-            hessian = np.empty((2,2))  # Initialising the Hessian matrix
-            # Calculating each element of the Hessian matrix using central-difference approximation
-            hessian[0,0] = ((-1 * self.calc_nll(self._prev_coord[0] + 2 * alpha_x, self._prev_coord[1])) + (16 * self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1])) \
-                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1])) \
-                            - self.calc_nll(self._prev_coord[0] - 2 * alpha_x, self._prev_coord[1])) / 12 * (alpha_x ** 2)
-            hessian[1,1] = ((-1 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * alpha_y)) + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + alpha_y)) \
-                            - (30 * self.calc_nll(self._prev_coord[0], self._prev_coord[1])) + + (16 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] - alpha_y)) \
-                            - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - 2 * alpha_y)) / 12 * (alpha_y ** 2)
-            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] + alpha_x, self._prev_coord[1] - alpha_y) \
-                            - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] + alpha_y) - self.calc_nll(self._prev_coord[0] - alpha_x, self._prev_coord[1] - alpha_y)) / (4 * alpha_x * alpha_y) 
+            # Finding the gradient vector using central-differencing scheme
+            grad = np.empty(3)
+            grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) - \
+                       self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1], self._prev_coord[2])) / (2 * h)
+            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
+                       self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h, self._prev_coord[2])) / (2 * h)
+            grad[2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                       self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
+
+            hessian = np.empty((3,3))  # Initialising the Hessian matrix
+            # Calculating each element of the Hessian matrix using forward-difference approximation
+            hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1], self._prev_coord[2]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2])) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)
+            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h, self._prev_coord[2]) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
+                            self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)
+            hessian[0,2] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                            self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)
             hessian[1,0] = hessian[0,1]
+            hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h, self._prev_coord[2]) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2])) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)
+            hessian[1,2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                            self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)
+            hessian[2,1] = hessian[1,2]
+            hessian[2,2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h)) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2])) / (h**2)            
+            
             # Calculating the next coordinate step
-            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian), grad)
+            new_coord = self._prev_coord - (alpha * np.matmul(grad, np.linalg.inv(hessian)))
             self._mins_list.append(new_coord)  # Saving new coordinate vector
-            # print(new_coord)
+            print(new_coord)
             if self._iterations == 0: 
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
@@ -502,14 +508,13 @@ class Minimise3D():
                 # Calculation of relative difference in each direction between successive minima
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
-                if rel_diff_x < threshold and rel_diff_y < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                rel_diff_z = abs(self._prev_coord[2] - new_coord[2]) / self._prev_coord[2]
+                if rel_diff_x < threshold and rel_diff_y < threshold and rel_diff_z < threshold:
+                    # Convergence condition: If relative differences are below the threshold (less than 0.0001% of previous minimum),
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
-                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
-                    if new_coord.all() == self._prev_coord.all():  
-                        self._iterations -= 1   # If coordinate values from subsequent iterations are the same, don't need to count current iteration
+                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1], new_coord[2])  # Calculating and saving the minimum NLL value at this minimum
                 else:
                     self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
 
@@ -519,10 +524,10 @@ class Minimise3D():
 
 
     def quasi_newton_min(self, alpha):
-        """Quasi-Newton simultaneous minimisation method for 2 dimensions.
+        """Quasi-Newton simultaneous minimisation method for 3 dimensions.
 
         A less computationally intensive approximation of the Newton method, which uses the local gradient to approximate the inverse Hessian.
-        However, the step size used, α, was scaled so that it has an equivalent relative magnitude in both coordinate directions, for optimal efficiency. 
+        However, the step size used, α, was scaled so that it has an equivalent relative magnitude in all coordinate directions, for optimal efficiency. 
         The coordinate is updated with each step taken, and iterations occur until the convergence condition is satisfied.
 
         Args:

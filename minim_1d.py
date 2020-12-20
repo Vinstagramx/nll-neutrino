@@ -204,7 +204,6 @@ class Minimise1D():
         
         # Setting a limit for the NLL iterations - i.e. value of minimum NLL + 0.5 
         nll_lim = self._min_func + 0.5
-
         self._theta_plus = self._min  # θ+ initially set to minimising mixing angle value
         self._plus_found = False  # Boolean flag for θ+ being found
         while not self._plus_found:
@@ -248,7 +247,7 @@ class Minimise1D():
         if not self._minimum_found:
             raise MinimisationError()
         
-        step = 1e-5  # Step for central-difference scheme - assumed same as the step used for the shift 
+        step = 1e-5  # Step for central-difference scheme - assumed same as the step used for the shift
         # Calculating the second derivative of the NLL at the minimum
         second_derivative = ((-1 * self.calc_nll(self._min + 2*step)) + (16 * self.calc_nll(self._min + step))) - (30 * self.calc_nll(self._min)) \
                             + (16 * self.calc_nll(self._min - step)) - self.calc_nll(self._min - 2 * step) / 12 * (step ** 2)
