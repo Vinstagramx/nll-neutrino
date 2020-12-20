@@ -338,7 +338,7 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # newt_mins = min_2d.mins_list
 # newt_mins = np.vstack(newt_mins)
 
-# LMA (Damped Least-Squares) scheme
+# LMA - Levenberg-Marquardt Algorithm/Damped Least-Squares scheme
 start = time.time()
 min_2d.LMA_min(alpha = 1e-5)
 end = time.time()
@@ -509,6 +509,26 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
 # newt_mins = min_3d.mins_list
 # newt_mins = np.vstack(newt_mins)
+
+# # LMA - Levenberg-Marquardt Algorithm/Damped Least-Squares scheme
+# start = time.time()
+# min_3d.LMA_min(alpha = 0.1)
+# end = time.time()
+# print("--- 3-D Simultaneous Minimisation (LMA Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_3d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_3d.min[1]}")
+# print(f"Cross section-Energy proportionality constant which minimises NLL: {min_3d.min[2]}")
+# print(f"NLL value: {min_3d.nll_min}")
+# print(f"Total iterations: {min_3d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# # Calculating error in minimising parameters
+# std_arr1 = min_3d.std_change()
+# std_arr2 = min_3d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
+# LMA_mins = min_3d.mins_list
+# LMA_mins = np.vstack(LMA_mins)
 
 # # Quasi-Newton scheme - Note this takes some time to run (~1k iterations)
 # start = time.time()

@@ -297,7 +297,7 @@ class Minimise2D():
                 else: 
                     self._rel_diff_y = abs(prev_ymin - self._ymin)/prev_ymin
                     if self._rel_diff_x < threshold and self._rel_diff_y < threshold:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.001% of previous minimum),
+                        # Convergence condition: If both x- and y- relative differences are below the threshold,
                         # then triggers the 'overall_minimum_found' flag and exits the loop after this iteration
                         self._overall_minimum_found = True
                         self._min = [prev_xmin, self._ymin]  # Saves minimum (x,y) coordinate 
@@ -369,7 +369,7 @@ class Minimise2D():
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 if rel_diff_x < threshold and rel_diff_y < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                    # Convergence condition: If both x- and y- relative differences are below the threshold ,
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
@@ -424,7 +424,7 @@ class Minimise2D():
                 rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                 rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                 if rel_diff_x < threshold and rel_diff_y < threshold:
-                    # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                    # Convergence condition: If both x- and y- relative differences are below the threshold,
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
@@ -520,20 +520,26 @@ class Minimise2D():
     def LMA_min(self, alpha):
         """Levenberg–Marquardt Algorithm/Damped Least-squares simultaneous minimisation method for 2 dimensions.
 
+        An algorithm which interpolates between the Gauss–Newton algorithm (GNA) and the gradient descent simultaneous minimisation method.
+        At each iteration, calculates the minimisation error using the difference between the function value estimated from the Taylor
+        series, and the true function value. This is expressed as a 'goodness of fit' parameter.
+        If the error goes up upon the calculation of a new step, this means that we would want to follow the gradient of the function more
+        --> the new step is rejected, and we scale alpha (the step size) up by 2.
+        If the error goes down with the calculation of a new step, this means that we would want to accept the new step, however we would also
+        want to reduce the influence of the gradient descent to prevent it becoming too large --> we scale alpha down by 2.
+        The steps above are iterated until the convergence condition is reached.
+
         Args:
-            alpha: Size of step taken between each iteration.
+            alpha: Size of step taken between each iteration - this is scaled according to how good the fit is at each iteration.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
         self._prev_coord = self.gen_start_pt()  # Generating starting position
-        self._mins_list = []  # Initialising list of minima (for plotting purposes)
+        # Initialising list of minima (for plotting purposes)
+        self._mins_list = [] 
         self._mins_list.append(self._prev_coord)
         threshold = 1e-6  # Convergence condition threshold
         h = 1e-6  # Step size for finite differencing (in this case the central-difference scheme)
-        prev_errors = np.empty(2)
-        prev_grad = np.empty(2)
-        alpha = alpha
-        prev_hess = np.empty((2,2))
         while not self._minimum_found:
             # Finding the gradient vector using central-differencing scheme
             grad = np.empty(2)
@@ -548,55 +554,41 @@ class Minimise2D():
             hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
                            self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
             hessian[1,0] = hessian[0,1]
-            # new_errors = np.reciprocal(np.diagonal(hessian))  # Error (variance) can be given by the inverse of the Hessian diagonal elements.
-            # print(new_errors)
-            # print(alpha)
-            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian + alpha * np.diag(np.diag(hessian))), grad)
-            step = new_coord - self._prev_coord
 
+            # Calculating the proposed new coordinate for this step
+            new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian + alpha * np.diag(np.diag(hessian))), grad)
+            step = new_coord - self._prev_coord  # Step vector
+            # Calculating the goodness of fit
             numerator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - self.calc_nll(new_coord[0], new_coord[1])
+            # Second order Taylor Series estimate of function value
             taylor_est = self.calc_nll(new_coord[0], new_coord[1]) + np.dot(grad, step) + \
                          0.5 * np.dot(step,np.matmul(hessian, step))
-            # error = self.calc_nll(new_coord[0], new_coord[1]) - taylor_est
-            # print(taylor_est)
             denominator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - taylor_est
-            # print(denominator)
             fit_goodness = numerator/denominator
-            # print(fit_goodness)
+
             if self._iterations == 0: 
                 # No need to calculate relative difference for the first iteration
                 self._prev_coord = new_coord  # Updating the coordinate for the next iteration
-                # prev_errors = new_errors
-                prev_grad = grad
-                prev_hess = hessian
             else:
-                # # If error has increased as a result of the update, step is rejected
-                # if False in np.greater_equal(prev_errors, new_errors):
-                #     alpha *= 10  # Increase step size by a factor of 10
-                # # If error has decreased as a result of the update, step is accepted
-                # else:
-                #     alpha /= 10  # Decrease step size by a factor of 10
+                # If the goodness of fit is negative, we want to reject the step
+                # --> New coordinate is not saved, and alpha is increased by a factor of 2
                 if fit_goodness < 0:
                     alpha *= 2
                 else:
-                    alpha /= 2
-                # # print(fit_goodness, nll_diff)
-                # if nll_diff > 0:                
+                    # If the goodness of fit is positive, we want to accept the step
+                    alpha /= 2               
                     # Calculation of relative difference in each direction between successive minima
                     rel_diff_x = abs(self._prev_coord[0] - new_coord[0]) / self._prev_coord[0]
                     rel_diff_y = abs(self._prev_coord[1] - new_coord[1]) / self._prev_coord[1]
                     if rel_diff_x < threshold and rel_diff_y < threshold:
-                        # Convergence condition: If both x- and y- relative differences are below the threshold (less than 0.0001% of previous minimum),
+                        # Convergence condition: If both x- and y- relative differences are below the threshold,
                         # then triggers the 'minimum_found' flag and exits the loop after this iteration
                         self._minimum_found = True
                         self._min = new_coord  # Saving minimum
                         self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
                     else:
                         self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
-                        print(new_coord)
-                        # prev_errors = new_errors
-                        prev_grad = grad
-                        prev_hess = hessian
+
                     self._mins_list.append(new_coord)  # Appending new coordinate to list
             self._iterations += 1  # Incrementing iteration counter by 1
 
