@@ -633,7 +633,6 @@ class Minimise3D():
 
         Args:
             alpha: Size of step taken between each iteration - this is scaled according to how good the fit is at each iteration.
-                   Note that the step is denoted by lambda in the report.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found

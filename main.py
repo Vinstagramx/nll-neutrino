@@ -374,6 +374,27 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # quas_mins = min_2d.mins_list
 # quas_mins = np.vstack(quas_mins)
 
+"""
+Section 4 - Validation of schemes with analytical function
+- Expected minimum: (-1,-1)
+"""
+def parab2d(x,y):
+  return ((x + 1) ** 2) + ((y+1) ** 2)
+
+min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -2], func = parab2d)
+# Univariate Minimisation
+start = time.time()
+min_2p.univ_min(first = 'x')
+end = time.time()
+print("--- Validation - 2-D Univariate ---")
+print(f"x-value which minimises function: {min_2p.min[0]}")
+print(f"y-value which minimises function: {min_2p.min[1]}")
+print(f"Function value: {min_2p.dir_min_func}")
+print(f"Total iterations: {min_2p.iterations}")
+print(f"x-direction --> Iterations: {min_2p.x_iters}, Minimisations: {min_2p.min_iters_x}")
+print(f"y-direction --> Iterations: {min_2p.y_iters}, Minimisations: {min_2p.min_iters_y}")
+print(f"Execution Time: {end-start}s")
+
 # # Creating contour plot of 2-D minimisation paths
 # plt.clf()
 # plt.scatter([0.6], [2.e-3], marker = 'x', s = 30, label = "Initial Point")

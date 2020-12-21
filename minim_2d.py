@@ -305,7 +305,10 @@ class Minimise2D():
                         prev_ymin = self._ymin  # If convergence condition not met, sets previous y-minimum variable equal to the found minimum
                 self._min_iters_y += 1
             # End of outer while-loop
-        self._nll_min = self.calc_nll(self._min[0], self._min[1])
+        if self._nll:
+            self._nll_min = self.calc_nll(self._min[0], self._min[1])
+        else:
+            self._nll_min = self._func(self._min[0], self._min[1])
         self._mins_list.append(self._min)  # Appending final minimum to list of minima
         return self._min  # Returns coordinate tuple containing minimising parameter
     
@@ -531,7 +534,6 @@ class Minimise2D():
 
         Args:
             alpha: Size of step taken between each iteration - this is scaled according to how good the fit is at each iteration.
-                   Note that the step is denoted by lambda in the report.
         """
         self._iterations = 0  # Iteration counter
         self._minimum_found = False  # Flag for the minimum being found
