@@ -338,23 +338,23 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # newt_mins = min_2d.mins_list
 # newt_mins = np.vstack(newt_mins)
 
-# LMA - Levenberg-Marquardt Algorithm/Damped Least-Squares scheme
-start = time.time()
-min_2d.LMA_min(alpha = 1e-5)
-end = time.time()
-print("--- 2-D Simultaneous Minimisation (LMA Method) ---")
-print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
-print(f"NLL value: {min_2d.nll_min}")
-print(f"Total iterations: {min_2d.iterations}")
-print(f"Execution Time: {end-start}s")
-# Calculating error in minimising parameters
-std_arr1 = min_2d.std_change()
-std_arr2 = min_2d.std_gauss()
-print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
-print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
-LMA_mins = min_2d.mins_list
-LMA_mins = np.vstack(LMA_mins)
+# # LMA - Levenberg-Marquardt Algorithm/Damped Least-Squares scheme
+# start = time.time()
+# min_2d.LMA_min(alpha = 1e-5)
+# end = time.time()
+# print("--- 2-D Simultaneous Minimisation (LMA Method) ---")
+# print(f"Mixing Angle which minimises NLL: {min_2d.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2d.min[1]}")
+# print(f"NLL value: {min_2d.nll_min}")
+# print(f"Total iterations: {min_2d.iterations}")
+# print(f"Execution Time: {end-start}s")
+# # Calculating error in minimising parameters
+# std_arr1 = min_2d.std_change()
+# std_arr2 = min_2d.std_gauss()
+# print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
+# print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
+# LMA_mins = min_2d.mins_list
+# LMA_mins = np.vstack(LMA_mins)
 
 # # Quasi-Newton scheme - Note this also takes some time to run (~1.5k iterations)
 # start = time.time()
