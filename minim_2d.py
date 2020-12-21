@@ -405,17 +405,30 @@ class Minimise2D():
         while not self._minimum_found:
             # Finding the gradient vector using central-differencing scheme
             grad = np.empty(2)
-            grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
-            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+            if self._nll:
+                grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+            else:
+                grad[0] = (self._func(self._prev_coord[0] + h, self._prev_coord[1]) - self._func(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                grad[1] = (self._func(self._prev_coord[0], self._prev_coord[1] + h) - self._func(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)   
             hessian = np.empty((2,2))  # Initialising the Hessian matrix
             # Calculating the second derivatives needed for the elements of the Hessian using forward-differencing scheme
-            hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1])) + \
-                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - \
-                           self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
-                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[1,0] = hessian[0,1]
+            if self._nll:
+                hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1])) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - \
+                            self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,0] = hessian[0,1]
+            else:
+                hessian[0,0] = (self._func(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self._func(self._prev_coord[0] + h, self._prev_coord[1])) + \
+                            self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[0,1] = (self._func(self._prev_coord[0] + h, self._prev_coord[1] + h) - self._func(self._prev_coord[0], self._prev_coord[1] + h) - \
+                            self._func(self._prev_coord[0] + h, self._prev_coord[1]) + self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,1] = (self._func(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self._func(self._prev_coord[0], self._prev_coord[1] + h)) + \
+                            self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,0] = hessian[0,1]
             new_coord = self._prev_coord - (alpha * np.matmul(grad, np.linalg.inv(hessian)))
             self._mins_list.append(new_coord)  # Appending new coordinate to list
 
@@ -431,9 +444,11 @@ class Minimise2D():
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
-                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
-                    # if new_coord.all() == self._prev_coord.all():  
-                    #     self._iterations -= 1   # If coordinate values from subsequent iterations are the same, don't need to count current iteration
+                    if self._nll:
+                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                    else:
+                        self._nll_min = self._func(new_coord[0], new_coord[1])
+
                 else:
                     self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
 

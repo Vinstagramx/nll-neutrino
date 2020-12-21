@@ -375,26 +375,8 @@ min_2d = Minimise2D([0.55, 0.78], [1e-3, 4e-3], nll = True, nll_data = data, sta
 # quas_mins = np.vstack(quas_mins)
 
 """
-Section 4 - Validation of schemes with analytical function
-- Expected minimum: (-1,-1)
+Section 4 - Plotting minimisation paths
 """
-def parab2d(x,y):
-  return ((x + 1) ** 2) + ((y+1) ** 2)
-
-min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -2], func = parab2d)
-# Univariate Minimisation
-start = time.time()
-min_2p.univ_min(first = 'x')
-end = time.time()
-print("--- Validation - 2-D Univariate ---")
-print(f"x-value which minimises function: {min_2p.min[0]}")
-print(f"y-value which minimises function: {min_2p.min[1]}")
-print(f"Function value: {min_2p.dir_min_func}")
-print(f"Total iterations: {min_2p.iterations}")
-print(f"x-direction --> Iterations: {min_2p.x_iters}, Minimisations: {min_2p.min_iters_x}")
-print(f"y-direction --> Iterations: {min_2p.y_iters}, Minimisations: {min_2p.min_iters_y}")
-print(f"Execution Time: {end-start}s")
-
 # # Creating contour plot of 2-D minimisation paths
 # plt.clf()
 # plt.scatter([0.6], [2.e-3], marker = 'x', s = 30, label = "Initial Point")
@@ -402,6 +384,7 @@ print(f"Execution Time: {end-start}s")
 # plt.plot(univ_mins[:,0], univ_mins[:,1], linestyle = 'dashed', color = "#0050d1", label = "Univariate")
 # plt.plot(grad_mins[:,0], grad_mins[:,1], linestyle = 'dashed', color = "#b000e6", label = "Gradient")
 # plt.plot(newt_mins[:,0], newt_mins[:,1], linestyle = 'dashed', color = "#9c3e00", label = "Newton")
+# plt.plot(LMA_mins[:,0], LMA_mins[:,1], linestyle = 'dashed', color = "#ff3300", label = "LMA")
 
 # x_theta = np.linspace(0.3, 1.2, 50)  # Array of mixing angles
 # y_mass = np.linspace(5e-4, 5e-3, 50)  # Array of squared mass differences
@@ -417,6 +400,41 @@ print(f"Execution Time: {end-start}s")
 # # Contour line plot
 # plots.contour(X, Y, z_nll, filename = "contour_path", colorbar = False, fill = False, \
 #               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
+
+"""
+Section 4 - Validation of schemes with analytical function
+- Expected minimum: (-1,-1)
+"""
+def parab2d(x,y):
+  return ((x + 1) ** 2) + ((y+1) ** 2)
+
+min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)
+# # Univariate Minimisation
+# start = time.time()
+# min_2p.univ_min(first = 'x')
+# end = time.time()
+# print("--- Validation - 2-D Univariate ---")
+# print(f"x-value which minimises function: {min_2p.min[0]}")
+# print(f"y-value which minimises function: {min_2p.min[1]}")
+# print(f"Function value: {min_2p.dir_min_func}")
+# print(f"Total iterations: {min_2p.iterations}")
+# print(f"x-direction --> Iterations: {min_2p.x_iters}, Minimisations: {min_2p.min_iters_x}")
+# print(f"y-direction --> Iterations: {min_2p.y_iters}, Minimisations: {min_2p.min_iters_y}")
+# print(f"Execution Time: {end-start}s")
+
+# Newton scheme - Runs in 2 iterations (first iteration is for saving variables)
+# --> as expected (1 iteration for a parabola)
+start = time.time()
+min_2p.newton_min(alpha = 1)
+end = time.time()
+print("---  Validation - 2-D Newton ---")
+print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
+print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+print(f"NLL value: {min_2p.nll_min}")
+print(f"Total iterations: {min_2p.iterations}")
+print(f"Execution Time: {end-start}s")
+
+
 
 
 # """
