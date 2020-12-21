@@ -487,8 +487,12 @@ class Minimise2D():
             if self._iterations == 0:
                 # Need to compute the gradient vector for the first iteration (grad is updated during the calculations of updating G for later iterations)
                 # --> Central difference scheme used to compute gradient vector
-                self._grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
-                self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+                if self._nll:
+                    self._grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                    self._grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+                else:
+                    self._grad[0] = (self._func(self._prev_coord[0] + h, self._prev_coord[1]) - self._func(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                    self._grad[1] = (self._func(self._prev_coord[0], self._prev_coord[1] + h) - self._func(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
 
             new_coord = self._prev_coord - (alpha_vec * np.matmul(G, self._grad))  # Calculating the new coordinate for this step
             self._mins_list.append(new_coord)  # Appending new coordinate to list
@@ -504,14 +508,20 @@ class Minimise2D():
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
-                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                    if self._nll:
+                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                    else:
+                        self._nll_min = self._func(new_coord[0], new_coord[1])
                 else:
                     # If the initial convergence condition is not fulfilled
                     delta_n = new_coord - self._prev_coord  # Calculating the vector δ_n
                     new_grad = np.empty(2)
-                    new_grad[0] = (self.calc_nll(new_coord[0] + h, new_coord[1]) - self.calc_nll(new_coord[0] - h, new_coord[1])) / (2 * h)
-                    new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + h) - self.calc_nll(new_coord[0], new_coord[1] - h)) / (2 * h)            
-
+                    if self._nll:
+                        new_grad[0] = (self.calc_nll(new_coord[0] + h, new_coord[1]) - self.calc_nll(new_coord[0] - h, new_coord[1])) / (2 * h)
+                        new_grad[1] = (self.calc_nll(new_coord[0], new_coord[1] + h) - self.calc_nll(new_coord[0], new_coord[1] - h)) / (2 * h)            
+                    else:
+                        new_grad[0] = (self._func(new_coord[0] + h, new_coord[1]) - self._func(new_coord[0] - h, new_coord[1])) / (2 * h)
+                        new_grad[1] = (self._func(new_coord[0], new_coord[1] + h) - self._func(new_coord[0], new_coord[1] - h)) / (2 * h)  
                     gamma_n = new_grad - self._grad  # Calculating the vector γ_n
                     gd_prod = np.dot(gamma_n, delta_n)  # Vector dot product of (γ_n, δ_n)
                     # Alternative convergence condition - if gamma_n * delta_n is equal to zero
@@ -519,7 +529,10 @@ class Minimise2D():
                     if gd_prod == 0:
                         self._minimum_found = True
                         self._min = new_coord
-                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                        if self._nll:
+                            self._nll_min = self.calc_nll(new_coord[0], new_coord[1])
+                        else:
+                            self._nll_min = self._func(new_coord[0], new_coord[1])
                     else:
                         # If there is no convergence, the vector G, ∇f, and the current coordinate are updated before the next iteration.
                         # Updating the inverse Hessian approximation matrix G using the DFP (Davidon-Fletcher-Powell) algorithm
@@ -561,27 +574,46 @@ class Minimise2D():
         while not self._minimum_found:
             # Finding the gradient vector using central-differencing scheme
             grad = np.empty(2)
-            grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
-            grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+            if self._nll:
+                grad[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) - self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                grad[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
+            else:
+                grad[0] = (self._func(self._prev_coord[0] + h, self._prev_coord[1]) - self._func(self._prev_coord[0] - h, self._prev_coord[1])) / (2 * h)
+                grad[1] = (self._func(self._prev_coord[0], self._prev_coord[1] + h) - self._func(self._prev_coord[0], self._prev_coord[1] - h)) / (2 * h)
             hessian = np.empty((2,2))  # Initialising the Hessian matrix
             # Calculating the second derivatives needed for the elements of the Hessian using forward-differencing scheme
-            hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1])) + \
-                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - \
-                           self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
-                           self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
-            hessian[1,0] = hessian[0,1]
-
+            if self._nll:
+                hessian[0,0] = (self.calc_nll(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1])) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[0,1] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1] + h) - self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h) - \
+                            self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1]) + self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h)) + \
+                            self.calc_nll(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,0] = hessian[0,1]
+            else:
+                hessian[0,0] = (self._func(self._prev_coord[0] + 2 * h, self._prev_coord[1]) - (2 * self._func(self._prev_coord[0] + h, self._prev_coord[1])) + \
+                            self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[0,1] = (self._func(self._prev_coord[0] + h, self._prev_coord[1] + h) - self._func(self._prev_coord[0], self._prev_coord[1] + h) - \
+                            self._func(self._prev_coord[0] + h, self._prev_coord[1]) + self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,1] = (self._func(self._prev_coord[0], self._prev_coord[1] + 2 * h) - (2 * self._func(self._prev_coord[0], self._prev_coord[1] + h)) + \
+                            self._func(self._prev_coord[0], self._prev_coord[1])) / (h**2)
+                hessian[1,0] = hessian[0,1]
             # Calculating the proposed new coordinate for this step
             new_coord = self._prev_coord - np.matmul(np.linalg.inv(hessian + alpha * np.diag(np.diag(hessian))), grad)
             step = new_coord - self._prev_coord  # Step vector
             # Calculating the goodness of fit
-            numerator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - self.calc_nll(new_coord[0], new_coord[1])
-            # Second order Taylor Series estimate of function value
-            taylor_est = self.calc_nll(new_coord[0], new_coord[1]) + np.dot(grad, step) + \
+            if self._nll:
+                numerator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - self.calc_nll(new_coord[0], new_coord[1])
+                # Second order Taylor Series estimate of function value
+                taylor_est = self.calc_nll(new_coord[0], new_coord[1]) + np.dot(grad, step) + \
                          0.5 * np.dot(step,np.matmul(hessian, step))
-            denominator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - taylor_est
+                denominator = self.calc_nll(self._prev_coord[0], self._prev_coord[1]) - taylor_est
+            else:
+                numerator = self._func(self._prev_coord[0], self._prev_coord[1]) - self._func(new_coord[0], new_coord[1])
+                taylor_est = self._func(new_coord[0], new_coord[1]) + np.dot(grad, step) + \
+                         0.5 * np.dot(step,np.matmul(hessian, step))
+                denominator = self._func(self._prev_coord[0], self._prev_coord[1]) - taylor_est
+           
             fit_goodness = numerator/denominator
 
             if self._iterations == 0: 
@@ -603,7 +635,10 @@ class Minimise2D():
                         # then triggers the 'minimum_found' flag and exits the loop after this iteration
                         self._minimum_found = True
                         self._min = new_coord  # Saving minimum
-                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                        if self._nll:
+                            self._nll_min = self.calc_nll(new_coord[0], new_coord[1])  # Calculating and saving the minimum NLL value at this minimum
+                        else:
+                            self._nll_min = self._func(new_coord[0], new_coord[1])
                     else:
                         self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
 

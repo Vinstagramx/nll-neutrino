@@ -401,14 +401,14 @@ Section 4 - Plotting minimisation paths
 # plots.contour(X, Y, z_nll, filename = "contour_path", colorbar = False, fill = False, \
 #               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
 
-"""
-Section 4 - Validation of schemes with analytical function
-- Expected minimum: (-1,-1)
-"""
-def parab2d(x,y):
-  return ((x + 1) ** 2) + ((y+1) ** 2)
+# """
+# Section 4 - Validation of schemes with analytical function
+# - Expected minimum: (-1,-1)
+# """
+# def parab2d(x,y):
+#   return ((x + 1) ** 2) + ((y+1) ** 2)
 
-min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)
+# min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)
 # # Univariate Minimisation
 # start = time.time()
 # min_2p.univ_min(first = 'x')
@@ -422,19 +422,39 @@ min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], f
 # print(f"y-direction --> Iterations: {min_2p.y_iters}, Minimisations: {min_2p.min_iters_y}")
 # print(f"Execution Time: {end-start}s")
 
-# Newton scheme - Runs in 2 iterations (first iteration is for saving variables)
-# --> as expected (1 iteration for a parabola)
-start = time.time()
-min_2p.newton_min(alpha = 1)
-end = time.time()
-print("---  Validation - 2-D Newton ---")
-print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
-print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
-print(f"NLL value: {min_2p.nll_min}")
-print(f"Total iterations: {min_2p.iterations}")
-print(f"Execution Time: {end-start}s")
+# # Newton scheme - Runs in 2 iterations (first iteration is for saving variables)
+# # --> as expected (1 iteration for a parabola)
+# start = time.time()
+# min_2p.newton_min(alpha = 1)
+# end = time.time()
+# print("---  Validation - 2-D Newton ---")
+# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"Function value: {min_2p.nll_min}")
+# print(f"Total iterations: {min_2p.iterations}")
+# print(f"Execution Time: {end-start}s")
 
+# # Quasi-Newton scheme
+# start = time.time()
+# min_2p.quasi_newton_min(alpha = 0.25)
+# end = time.time()
+# print("---  Validation - 2-D Quasi-Newton ---")
+# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"Function value: {min_2p.nll_min}")
+# print(f"Total iterations: {min_2p.iterations}")
+# print(f"Execution Time: {end-start}s")
 
+# # LMA scheme
+# start = time.time()
+# min_2p.LMA_min(alpha = 0.00005)
+# end = time.time()
+# print("---  Validation - 2-D LMA/Damped Least-squares ---")
+# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
+# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"Function value: {min_2p.nll_min}")
+# print(f"Total iterations: {min_2p.iterations}")
+# print(f"Execution Time: {end-start}s")
 
 
 # """
