@@ -427,12 +427,20 @@ class Minimise3D():
         while not self._minimum_found:
             # Finding the gradient vector d, using a central differencing scheme
             d = np.empty(3)
-            d[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) - \
-                    self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1], self._prev_coord[2])) / (2 * h)
-            d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
-                    self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h, self._prev_coord[2])) / (2 * h)
-            d[2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
-                    self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
+            if self._nll:
+                d[0] = (self.calc_nll(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) - \
+                        self.calc_nll(self._prev_coord[0] - h, self._prev_coord[1], self._prev_coord[2])) / (2 * h)
+                d[1] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
+                        self.calc_nll(self._prev_coord[0], self._prev_coord[1] - h, self._prev_coord[2])) / (2 * h)
+                d[2] = (self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                        self.calc_nll(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
+            else:
+                d[0] = (self._func(self._prev_coord[0] + h, self._prev_coord[1], self._prev_coord[2]) - \
+                        self._func(self._prev_coord[0] - h, self._prev_coord[1], self._prev_coord[2])) / (2 * h)
+                d[1] = (self._func(self._prev_coord[0], self._prev_coord[1] + h, self._prev_coord[2]) - \
+                        self._func(self._prev_coord[0], self._prev_coord[1] - h, self._prev_coord[2])) / (2 * h)
+                d[2] = (self._func(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] + h) - \
+                        self._func(self._prev_coord[0], self._prev_coord[1], self._prev_coord[2] - h)) / (2 * h)
             new_coord = self._prev_coord - (alpha_vec * d)  # Calculation of new coordinate vector
 
             if self._iterations == 0:
@@ -448,7 +456,10 @@ class Minimise3D():
                     # then triggers the 'minimum_found' flag and exits the loop after this iteration
                     self._minimum_found = True
                     self._min = new_coord  # Saving minimum
-                    self._nll_min = self.calc_nll(new_coord[0], new_coord[1], new_coord[2])  # Calculating and saving the minimum NLL value at this minimum
+                    if self._nll:
+                        self._nll_min = self.calc_nll(new_coord[0], new_coord[1], new_coord[2])  # Calculating and saving the minimum NLL value at this minimum
+                    else:
+                        self._nll_min = self._func(new_coord[0], new_coord[1], new_coord[2])  # Calculating and saving the minimum NLL value at this minimum
                 else:
                     self._prev_coord = new_coord  # Updating the coordinate for the next iteration if convergence condition is not met
             

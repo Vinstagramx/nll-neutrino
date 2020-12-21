@@ -401,15 +401,15 @@ Section 4 - Plotting minimisation paths
 # plots.contour(X, Y, z_nll, filename = "contour_path", colorbar = False, fill = False, \
 #               title = "Contour Plot of NLL vs Mixing Angle and squared mass difference", xlabel = r"$\theta_{23}$ (rads)", ylabel = r"$\Delta_{23}^2$ (eV$^2$)")
 
-# """
-# Section 4 - Validation of schemes with analytical function
-# - Expected minimum: (-1,-1)
-# """
+"""
+Section 4 - Validation of schemes with analytical function
+- Expected minimum: (-1,-1)
+"""
 # Parabolic function, minimum at (-1,-1), function value = 0
-# def parab2d(x,y):
-#   return ((x + 1) ** 2) + ((y+1) ** 2)
+def parab2d(x,y):
+  return ((x + 1) ** 2) + ((y+1) ** 2)
 
-# min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)  # Initialising Minimise2D object
+min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)  # Initialising Minimise2D object
 
 # # Univariate Minimisation
 # start = time.time()
@@ -422,6 +422,18 @@ Section 4 - Plotting minimisation paths
 # print(f"Total iterations: {min_2p.iterations}")
 # print(f"x-direction --> Iterations: {min_2p.x_iters}, Minimisations: {min_2p.min_iters_x}")
 # print(f"y-direction --> Iterations: {min_2p.y_iters}, Minimisations: {min_2p.min_iters_y}")
+# print(f"Execution Time: {end-start}s")
+
+
+# # Gradient
+# start = time.time()
+# min_2p.grad_min(alpha = 0.5)
+# end = time.time()
+# print("---  Validation - 2-D Gradient ---")
+# print(f"x-value which minimises function: {min_2p.min[0]}")
+# print(f"y-value which minimises function: {min_2p.min[1]}")
+# print(f"Function value: {min_2p.nll_min}")
+# print(f"Total iterations: {min_2p.iterations}")
 # print(f"Execution Time: {end-start}s")
 
 # # Newton scheme - Runs in 2 iterations (first iteration is for saving variables)
@@ -451,7 +463,7 @@ Section 4 - Plotting minimisation paths
 # start = time.time()
 # min_2p.LMA_min(alpha = 0.00005)
 # end = time.time()
-# print("---  Validation - 2-D LMA/Damped Least-squares ---")
+# print("---  Validation - 2-D LMA/Damped Least-quares ---")
 # print(f"x-value which minimises function: {min_2p.min[0]}")
 # print(f"y-value which minimises function: {min_2p.min[1]}")
 # print(f"Function value: {min_2p.nll_min}")
@@ -606,15 +618,15 @@ Section 4 - Plotting minimisation paths
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
 
-"""
-Section 5 - Validation of schemes with analytical function
-- Expected minimum: (2, 2, 2)
-"""
-# Parabolic function, minimum at (2, 2, 2), function value = 0
-def parab3d(x,y,z):
-  return ((x - 2) ** 2) + ((y-2) ** 2) + ((z - 2) ** 2)
+# """
+# Section 5 - Validation of schemes with analytical function
+# - Expected minimum: (2, 2, 2)
+# """
+# # Parabolic function, minimum at (2, 2, 2), function value = 0
+# def parab3d(x,y,z):
+#   return ((x - 2) ** 2) + ((y-2) ** 2) + ((z - 2) ** 2)
 
-min_3p = Minimise3D([1, 3], [0, 4], [1.5, 2.5], nll = False, start_coord = [1.5, 1.5, 1.5], func = parab3d)  # Initialising Minimise3D object
+# min_3p = Minimise3D([1, 3], [0, 4], [1.5, 2.5], nll = False, start_coord = [1.5, 1.5, 1.5], func = parab3d)  # Initialising Minimise3D object
 
 # # Univariate Minimisation
 # start = time.time()
@@ -629,6 +641,18 @@ min_3p = Minimise3D([1, 3], [0, 4], [1.5, 2.5], nll = False, start_coord = [1.5,
 # print(f"x-direction --> Iterations: {min_3p.x_iters}, Minimisations: {min_3p.min_iters_x}")
 # print(f"y-direction --> Iterations: {min_3p.y_iters}, Minimisations: {min_3p.min_iters_y}")
 # print(f"y-direction --> Iterations: {min_3p.z_iters}, Minimisations: {min_3p.min_iters_z}")
+# print(f"Execution Time: {end-start}s")
+
+# # Gradient scheme 
+# start = time.time()
+# min_3p.grad_min(alpha = 0.3)
+# end = time.time()
+# print("---  Validation - 3-D Gradient ---")
+# print(f"x-value which minimises function: {min_3p.min[0]}")
+# print(f"y-value which minimises function: {min_3p.min[1]}")
+# print(f"z-value which minimises function: {min_3p.min[2]}")
+# print(f"Function value: {min_3p.nll_min}")
+# print(f"Total iterations: {min_3p.iterations}")
 # print(f"Execution Time: {end-start}s")
 
 # # Newton scheme 
@@ -659,7 +683,7 @@ min_3p = Minimise3D([1, 3], [0, 4], [1.5, 2.5], nll = False, start_coord = [1.5,
 # start = time.time()
 # min_3p.LMA_min(alpha = 0.3)
 # end = time.time()
-# print("---  Validation - 3-D LMA ---")
+# print("---  Validation - 3-D LMA/Damped Least-Squares ---")
 # print(f"x-value which minimises function: {min_3p.min[0]}")
 # print(f"y-value which minimises function: {min_3p.min[1]}")
 # print(f"z-value which minimises function: {min_3p.min[2]}")
