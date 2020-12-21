@@ -405,10 +405,12 @@ Section 4 - Plotting minimisation paths
 # Section 4 - Validation of schemes with analytical function
 # - Expected minimum: (-1,-1)
 # """
+# Parabolic function, minimum at (-1,-1), function value = 0
 # def parab2d(x,y):
 #   return ((x + 1) ** 2) + ((y+1) ** 2)
 
-# min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)
+# min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], func = parab2d)  # Initialising Minimise2D object
+
 # # Univariate Minimisation
 # start = time.time()
 # min_2p.univ_min(first = 'x')
@@ -428,8 +430,8 @@ Section 4 - Plotting minimisation paths
 # min_2p.newton_min(alpha = 1)
 # end = time.time()
 # print("---  Validation - 2-D Newton ---")
-# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"x-value which minimises function: {min_2p.min[0]}")
+# print(f"y-value which minimises function: {min_2p.min[1]}")
 # print(f"Function value: {min_2p.nll_min}")
 # print(f"Total iterations: {min_2p.iterations}")
 # print(f"Execution Time: {end-start}s")
@@ -439,8 +441,8 @@ Section 4 - Plotting minimisation paths
 # min_2p.quasi_newton_min(alpha = 0.25)
 # end = time.time()
 # print("---  Validation - 2-D Quasi-Newton ---")
-# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"x-value which minimises function: {min_2p.min[0]}")
+# print(f"y-value which minimises function: {min_2p.min[1]}")
 # print(f"Function value: {min_2p.nll_min}")
 # print(f"Total iterations: {min_2p.iterations}")
 # print(f"Execution Time: {end-start}s")
@@ -450,8 +452,8 @@ Section 4 - Plotting minimisation paths
 # min_2p.LMA_min(alpha = 0.00005)
 # end = time.time()
 # print("---  Validation - 2-D LMA/Damped Least-squares ---")
-# print(f"Mixing Angle which minimises NLL: {min_2p.min[0]}")
-# print(f"Squared Mass Difference which minimises NLL: {min_2p.min[1]}")
+# print(f"x-value which minimises function: {min_2p.min[0]}")
+# print(f"y-value which minimises function: {min_2p.min[1]}")
 # print(f"Function value: {min_2p.nll_min}")
 # print(f"Total iterations: {min_2p.iterations}")
 # print(f"Execution Time: {end-start}s")
@@ -497,12 +499,12 @@ Section 4 - Plotting minimisation paths
 # plots.contour(X, Y, z_nll, filename = "contour_cross_sec", colorbar = False, fill = False, \
 #               title = "Contour Plot of NLL vs Mixing Angle and Cross-Section Proportionality", xlabel = r"$\theta_{23}$ (rads)", ylabel = "Cross Section Proportionality")
 
-"""
-Section 5 - Testing 3-D Minimisation Schemes
-- The schemes previously tested in section 4 were generalised to 3 dimensions, and tested.
-- Note: x refers to the mixing angle, y refers to the squared mass difference, and z refers to the cross-section proportionality constant.
-- From inspection (nll_cross_secs.pdf), the z-initialisation range was chosen to be [0.5,2].
-"""
+# """
+# Section 5 - Testing 3-D Minimisation Schemes
+# - The schemes previously tested in section 4 were generalised to 3 dimensions, and tested.
+# - Note: x refers to the mixing angle, y refers to the squared mass difference, and z refers to the cross-section proportionality constant.
+# - From inspection (nll_cross_secs.pdf), the z-initialisation range was chosen to be [0.5,2].
+# """
 # data = [en_array, event_no, exp_data]  # Data to be passed into the Minimise2D object
 # # Creating a Minimise3D object for univariate minimisation (also used later)
 # # min_3d = Minimise3D([0.55, 0.78], [1e-3, 4e-3], [0.5,2], nll = True, nll_data = data)
@@ -527,7 +529,7 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-# univ_mins = min_3d.mins_list
+
 
 # # Gradient scheme - Note this takes a long time to run (~2.5k iterations)
 # start = time.time()
@@ -546,8 +548,7 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-# grad_mins = min_3d.mins_list
-# grad_mins = np.vstack(grad_mins)
+
 
 # # Newton scheme - Note: Error calculation is quite slow due to inaccuracies (explained in report)
 # start = time.time()
@@ -566,8 +567,7 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-# newt_mins = min_3d.mins_list
-# newt_mins = np.vstack(newt_mins)
+
 
 # # LMA - Levenberg-Marquardt Algorithm/Damped Least-Squares scheme
 # start = time.time()
@@ -586,8 +586,7 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-# LMA_mins = min_3d.mins_list
-# LMA_mins = np.vstack(LMA_mins)
+
 
 # # Quasi-Newton scheme - Note this takes some time to run (~1k iterations)
 # start = time.time()
@@ -606,5 +605,64 @@ Section 5 - Testing 3-D Minimisation Schemes
 # print(f"Standard deviation of θ: Difference estimate = {std_arr1[0]}; Curvature estimate = {std_arr2[0]}")
 # print(f"Standard deviation of Squared Mass Diff: Difference estimate = ({std_arr1[1]}; Curvature estimate = {std_arr2[1]})")
 # print(f"Standard deviation of Cross-Section - Energy Scaling Factor: Difference estimate = ({std_arr1[2]}; Curvature estimate = {std_arr2[2]})")
-# quas_mins = min_3d.mins_list
-# quas_mins = np.vstack(quas_mins)
+
+"""
+Section 5 - Validation of schemes with analytical function
+- Expected minimum: (2, 2, 2)
+"""
+# Parabolic function, minimum at (2, 2, 2), function value = 0
+def parab3d(x,y,z):
+  return ((x - 2) ** 2) + ((y-2) ** 2) + ((z - 2) ** 2)
+
+min_3p = Minimise3D([1, 3], [0, 4], [1.5, 2.5], nll = False, start_coord = [1.5, 1.5, 1.5], func = parab3d)  # Initialising Minimise3D object
+
+# # Univariate Minimisation
+# start = time.time()
+# min_3p.univ_min(first = 'x')
+# end = time.time()
+# print("--- Validation - 3-D Univariate ---")
+# print(f"x-value which minimises function: {min_3p.min[0]}")
+# print(f"y-value which minimises function: {min_3p.min[1]}")
+# print(f"z-value which minimises function: {min_3p.min[2]}")
+# print(f"Function value: {min_3p.dir_min_func}")
+# print(f"Total iterations: {min_3p.iterations}")
+# print(f"x-direction --> Iterations: {min_3p.x_iters}, Minimisations: {min_3p.min_iters_x}")
+# print(f"y-direction --> Iterations: {min_3p.y_iters}, Minimisations: {min_3p.min_iters_y}")
+# print(f"y-direction --> Iterations: {min_3p.z_iters}, Minimisations: {min_3p.min_iters_z}")
+# print(f"Execution Time: {end-start}s")
+
+# # Newton scheme 
+# start = time.time()
+# min_3p.newton_min(alpha = 0.5)
+# end = time.time()
+# print("---  Validation - 3-D Newton ---")
+# print(f"x-value which minimises function: {min_3p.min[0]}")
+# print(f"y-value which minimises function: {min_3p.min[1]}")
+# print(f"z-value which minimises function: {min_3p.min[2]}")
+# print(f"Function value: {min_3p.nll_min}")
+# print(f"Total iterations: {min_3p.iterations}")
+# print(f"Execution Time: {end-start}s")
+
+# # Quasi-Newton scheme 
+# start = time.time()
+# min_3p.quasi_newton_min(alpha = 0.3)
+# end = time.time()
+# print("---  Validation - 3-D Quasi-Newton ---")
+# print(f"x-value which minimises function: {min_3p.min[0]}")
+# print(f"y-value which minimises function: {min_3p.min[1]}")
+# print(f"z-value which minimises function: {min_3p.min[2]}")
+# print(f"Function value: {min_3p.nll_min}")
+# print(f"Total iterations: {min_3p.iterations}")
+# print(f"Execution Time: {end-start}s")
+
+# # LMA/ Damped Least-squares scheme 
+# start = time.time()
+# min_3p.LMA_min(alpha = 0.3)
+# end = time.time()
+# print("---  Validation - 3-D LMA ---")
+# print(f"x-value which minimises function: {min_3p.min[0]}")
+# print(f"y-value which minimises function: {min_3p.min[1]}")
+# print(f"z-value which minimises function: {min_3p.min[2]}")
+# print(f"Function value: {min_3p.nll_min}")
+# print(f"Total iterations: {min_3p.iterations}")
+# print(f"Execution Time: {end-start}s")
