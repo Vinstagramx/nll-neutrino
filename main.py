@@ -463,7 +463,7 @@ min_2p = Minimise2D([-2, 0], [-3, 1], nll = False, start_coord = [-0.5, -0.5], f
 # start = time.time()
 # min_2p.LMA_min(alpha = 0.00005)
 # end = time.time()
-# print("---  Validation - 2-D LMA/Damped Least-quares ---")
+# print("---  Validation - 2-D LMA/Damped Least-Squares ---")
 # print(f"x-value which minimises function: {min_2p.min[0]}")
 # print(f"y-value which minimises function: {min_2p.min[1]}")
 # print(f"Function value: {min_2p.nll_min}")
